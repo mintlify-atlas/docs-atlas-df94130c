@@ -1,5 +1,5 @@
 ---
-title: "How the Claude Resume Kit knowledge base works"
+title: "How the Claude Resume Kit knowledge base is structured"
 sidebarTitle: "Knowledge Base"
 description: "A three-layer architecture — extractions, experience files, and bundles — that forms the verified foundation every application draws from."
 ---
@@ -69,7 +69,7 @@ The knowledge base is built in three layers, each synthesized from the layer bel
       impact. 3,000x speedup is a concrete metric. Published first-author in high-impact journal.
     ```
 
-    Each achievement has pre-written bullet variants at every length — `1L` (one rendered line), `2L` (two lines), and `3L` (three lines) — calibrated to the character budgets of the included LaTeX templates. The `Tags` field controls which role-type audiences this achievement is relevant for. The `Significance` field explains the strategic value, which `/make-cl` uses for cover letter framing.
+    Each achievement has pre-written bullet variants at two lengths — `2L` (two rendered lines) and `3L` (three lines) — calibrated to the character budgets of the included LaTeX templates. The `Tags` field controls which role-type audiences this achievement is relevant for. The `Significance` field explains the strategic value, which `/make-cl` uses for cover letter framing.
 
     You can edit experience files directly after `/setup-build-kb` creates them — add bullet variants, adjust wording, correct numbers. The files are yours.
   </Step>
@@ -85,9 +85,9 @@ The knowledge base is built in three layers, each synthesized from the layer bel
 
     | Section | Contents |
     |---------|----------|
-    | **S1: Role Profile + Priority Matrix** | What this audience values, ranked. Achievement priority table with reframing notes. |
+    | **S1: Role Profile** | What this audience values, ranked. Positioning strategy for this role type. |
     | **S2: Summary Guide** | Tagline patterns, building blocks, do's and don'ts for the summary section. |
-    | **S3: Achievement Reframing Map** | How each achievement translates into this audience's vocabulary. |
+    | **S3: Achievement Reframing Map** | Priority matrix for this audience — which achievements to use, in what order, with reframing notes. |
     | **S4: Skills Guide** | Which tools to bold, which to include, how to group them for this role type. |
     | **S5: Cover Letter Guide** | Opening hook options, paragraph templates, anti-patterns to avoid. |
   </Step>
@@ -95,7 +95,7 @@ The knowledge base is built in three layers, each synthesized from the layer bel
 
 ## The Priority Matrix: How Selection Works
 
-The S1 Priority Matrix in each bundle is the core selection mechanism. When `/make-resume` reads a JD and selects bullets, it consults this table — not a generic ranking — to decide which achievements to use and how to present them.
+The S3 Priority Matrix in each bundle is the core selection mechanism. When `/make-resume` reads a JD and selects bullets, it consults this table — not a generic ranking — to decide which achievements to use and how to present them.
 
 Here is the actual Priority Matrix from `bundle_academic.md`:
 
