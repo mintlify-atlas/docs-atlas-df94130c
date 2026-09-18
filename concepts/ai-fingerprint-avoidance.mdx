@@ -1,0 +1,165 @@
+---
+title: "AI fingerprint avoidance in generated documents"
+sidebarTitle: "AI Fingerprints"
+description: "Banned words, structural anti-patterns, and a 12-item post-generation scan work together to keep resumes and cover letters from reading as AI-generated."
+---
+
+AI-generated resumes and cover letters often contain detectable patterns: specific banned words, uniform sentence lengths, bullets that end with vague `-ing` phrases, and structural habits that readers with calibrated intuitions immediately recognize. Claude Resume Kit loads `resume_builder/support/ai_fingerprint_rules.md` for every generation skill and every critique run, and performs a 12-item scan before presenting any output to the user. The primary defense is the generation protocol itself — specific facts from experience files, character-precise limits, and JD-specific vocabulary that force concreteness. The rules file is a secondary safety net.
+
+## Tier 1 Banned Words
+
+These words are dead giveaways. They appear in a disproportionate share of AI-generated text and are never used in any output, regardless of context.
+
+<Warning>
+  The following words are unconditionally banned from all generated resumes, CVs, and cover letters. No exceptions, no paraphrasing that keeps the concept — replace entirely.
+</Warning>
+
+`delve` · `tapestry` · `multifaceted` · `pivotal` · `realm` · `synergy` · `paradigm` · `holistic` · `nuanced` · `foster` · `embark` · `leverage` (as a verb) · `utilize` · `harness` · `spearhead` · `cornerstone` · `landscape` (metaphorical) · `journey` (metaphorical) · `cutting-edge` · `novel` (unless quoting a JD verbatim) · `innovative` · `groundbreaking`
+
+<Note>
+  Technical uses are exceptions: "free energy landscape," "threat landscape," and "novel" quoted verbatim from a JD are all fine. The ban is on metaphorical use — "navigating the landscape of modern ML" is banned; "protein folding free energy landscape" is not.
+</Note>
+
+## Replacement Tables
+
+For banned adjectives, verbs, and adverbs, use the replacements in these tables rather than finding another way to say the same AI-flavored thing.
+
+<Tabs>
+  <Tab title="Banned Adjectives">
+    | Banned | Replacement |
+    |--------|-------------|
+    | robust | strong, reliable |
+    | comprehensive | thorough, broad |
+    | innovative | new, original (or omit) |
+    | pivotal | key, central |
+    | meticulous | careful, precise |
+    | diverse | varied, wide-ranging |
+    | extensive | broad, deep, 10+ years of |
+  </Tab>
+  <Tab title="Banned Verbs">
+    | Banned | Replacement |
+    |--------|-------------|
+    | leverage | use, apply, draw on |
+    | utilize | use |
+    | harness | apply, use, draw on |
+    | spearhead | lead, start, launch |
+    | foster | support, build, grow |
+    | facilitate | run, lead, coordinate, enable |
+    | showcase | show, demonstrate |
+    | underscore | show, highlight |
+    | bolster | strengthen, support |
+  </Tab>
+  <Tab title="Banned Adverbs">
+    Never use: `meticulously`, `notably`, `subsequently` (use "then" or "later"), `remarkably`, `seamlessly`, `thereby`
+  </Tab>
+</Tabs>
+
+## Banned Phrases
+
+Beyond individual words, certain phrases are associated with AI-generated writing regardless of word choice.
+
+<CodeGroup>
+  ```text Opening / Transition Phrases (banned)
+  "In today's rapidly evolving..."
+  "At the forefront of..."
+  "It is worth noting that..."
+  "This experience has taught me..."
+  "I am uniquely positioned to..."
+  "In an era of..."
+  ```
+
+  ```text Resume / CL Phrases (banned)
+  "proven track record"
+  "passionate about" (use a specific interest instead)
+  "I am excited to apply" (use a concrete reason instead)
+  "demonstrated ability to" (just state what you did)
+  "strong foundation in"
+  "well-versed in"
+  "adept at"
+  ```
+
+  ```text Academic / Research Phrases (banned)
+  "groundbreaking research"
+  "cutting-edge methodology"
+  "novel approach" (say what is new about it instead)
+  "significant contributions to the field"
+  "at the intersection of X and Y" (name the specific intersection)
+  ```
+</CodeGroup>
+
+## Structural Anti-Patterns
+
+Word-level bans catch vocabulary; structural rules catch the patterns that survive synonym replacement.
+
+### The #1 Structural AI Marker: `-ing` Bullet Endings
+
+Bullets that end with vague `-ing` analysis phrases are the single most detectable structural signal of AI generation. The fix is always to restructure the bullet so it ends with a concrete result, metric, or named object.
+
+| ❌ Banned Pattern | ✅ Correct Pattern |
+|------------------|-------------------|
+| `...contributing to improved efficiency` | `...contributing to a 15% reduction in compute cost` |
+| `...enabling new discovery approaches` | `...enabling 8,500 variant screens per 48-hour run` |
+| `...advancing the field of protein engineering` | `...identified 5 experimentally confirmed thermostable candidates` |
+
+The rule: a bullet may end with an `-ing` phrase only if that phrase contains a specific metric or named object. "Contributing to improved efficiency" fails. "Contributing to a 15% reduction" passes (ends with metric).
+
+### Em-Dash Overuse
+
+Em-dashes (`---` in LaTeX) accumulate faster in AI-generated cover letters than in any other document type. The hard limit is **2 em-dashes per document** — total, across the entire `.tex` file. Extras must be replaced with commas, semicolons, or parentheses.
+
+There is one additional rule: items in a Fellowships & Honors section use `. ` (period + space) as a separator, not `---`.
+
+### Other Structural Rules
+
+- **No rhetorical Q+A:** Never ask a question then answer it ("What makes this unique? The answer is...")
+- **No gerund fragment stacking:** Avoid sequences of 3+ `-ing` phrases ("developing, testing, and deploying...")
+- **No reframe pattern:** Never use "It's not X — it's Y" constructions
+- **No same-structure paragraph starts:** If P1 opens "My research...", P2 must not open "My experience...", P3 must not open "My approach..."
+- **No constant triplet structures:** Avoid "X, Y, and Z" in more than 2 sentences per document. Use pairs, single items, or lists of 4+
+- **Vary sentence length:** Mix short (8–12 words) with long (20–30 words). Three consecutive same-length sentences read as AI-generated
+
+## Positive Markers
+
+Avoiding banned content is necessary but not sufficient. These signals distinguish human writing from AI-filtered writing:
+
+1. **Specific details** — "Ran 847 MD simulations on protein variants" not "Conducted extensive simulations"
+2. **Front-loaded specifics** — Lead with the concrete thing, not the framing around it
+3. **Named entities** — Tool names, method names, journal names, institution names
+4. **Audience-appropriate jargon** — Use the JD's own vocabulary, not generic synonyms
+5. **Short connecting words** — "so", "but", "and", "then" — not "consequently", "however", "additionally", "subsequently"
+6. **First-person specificity in CLs** — "I built" not "Was responsible for building"
+7. **Sentence length variety** — Deliberate mix of 8-word and 25-word sentences within the same paragraph
+8. **One human detail per CL page** — A specific lab memory, a conference conversation, a problem that kept you up — concrete and brief
+
+<Info>
+  Cover letters are the most vulnerable document to AI detection because they are prose-heavy and experienced readers have strong intuitions about "how people write." All rules above apply with extra weight in CLs. Pay special attention to the opening sentence (must be specific to the company, not generic), sentence length variety, and em-dash usage.
+</Info>
+
+## The 12-Item Post-Generation Scan
+
+Every skill runs this checklist on every generated document before presenting output to the user. Any failure is a Tier 1 fix — not optional polish.
+
+```text 12-Item Post-Generation Scan (from ai_fingerprint_rules.md Section 6)
+ 1. [ ] Any Tier 1 banned word present? (Search for each)
+ 2. [ ] Any banned phrase from the phrases list?
+ 3. [ ] More than 2 em-dashes (---) in the document?
+ 4. [ ] Any bullet ending with an -ing analysis phrase?
+ 5. [ ] Three or more consecutive sentences of similar length?
+ 6. [ ] Paragraph starts repeating the same structure?
+        (e.g., "My research...", "My experience...", "My approach...")
+ 7. [ ] More than 2 "X, Y, and Z" triplet structures in the document?
+ 8. [ ] CL opens with a generic phrase instead of a company-specific reference?
+ 9. [ ] Any metaphorical use of "landscape," "journey," "realm," or "tapestry"?
+10. [ ] Passive voice in more than 20% of bullet verbs?
+11. [ ] Fellowships/Honors items use --- instead of . ?
+12. [ ] Any adverb from the banned list?
+        (meticulously, notably, subsequently, remarkably, seamlessly, thereby)
+```
+
+<Note>
+  The primary defense against AI detection is the generation protocol itself — specific facts drawn from experience files, character-precise bullet limits, and JD-specific vocabulary that force the output to be concrete. The `ai_fingerprint_rules.md` file is a secondary safety net that catches what slips through.
+</Note>
+
+<Tip>
+  The `/critique` skill runs this 12-item scan as Part 6G of its Post-Generation Verification pass. Any scan failure becomes a Tier 1 actionable improvement in the critique output, which `/edit-resume` then applies in the next session.
+</Tip>

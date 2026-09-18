@@ -1,0 +1,280 @@
+---
+title: "The eight-dimension critique framework reference"
+sidebarTitle: "Critique Framework"
+description: "How /critique builds a domain-specialist lens, runs five reader personas, scores eight weighted dimensions, and produces ranked improvement tiers per JD."
+---
+
+The `/critique` skill runs a comprehensive multi-part assessment designed to catch what would otherwise take multiple manual review passes. It builds a domain-specialist lens for the specific JD and company first, then runs five reader personas through that lens, scores eight dimensions, and produces tiered improvement recommendations with interview likelihood estimates. The entire critique is written to a persistent output file in `output/<Folder>/critique_<name>.md`.
+
+<Note>
+The `/critique` skill is intentionally run in a **fresh session** separate from the generation session. Fresh context gives the critique an unbiased perspective — it catches issues the generation session normalized after hours of working in the same document.
+</Note>
+
+---
+
+## Part 0: Domain-Specialist Lens
+
+Before any persona read-through, the skill constructs a domain-specialist lens for this specific JD and company. The lens is generated fresh from the JD text and company context — it is not a generic template. If a session file already exists with JD Analysis and Company Context sections, those are used as the foundation; otherwise the skill researches from scratch.
+
+The lens produces seven elements:
+
+<Accordion title="1. Reviewer Persona Construction">
+Who actually reads this resume? The skill constructs a specific persona from the JD's reporting line, department name, seniority level, and company context.
+
+Output includes:
+- Their job title and seniority
+- What they do daily (which tools they use, which problems they solve)
+- Estimated number of CVs they have read for this posting
+- What they have seen 100 times that makes them roll their eyes
+- What would genuinely surprise or impress them
+</Accordion>
+
+<Accordion title="2. Company Research">
+What does this company make, sell, or research?
+
+Output includes:
+- Core business and revenue model
+- R&D culture: academic-leaning, patent-driven, product-shipping, or mission-driven
+- Recent news, strategic priorities, or technology bets (if known)
+- Vocabulary that signals "insider who understands our business" vs. "outsider applying generically"
+- Explicit flags for any assumptions and uncertainty
+</Accordion>
+
+<Accordion title="3. JD Deep Read — Vocabulary Extraction">
+The JD is read three times: first for requirements, second for culture signals, third for vocabulary.
+
+Output includes:
+- 8–10 most important JD terms/phrases, ranked by frequency, placement (title vs. body), and whether they represent binary capabilities vs. spectrum skills
+- For each term: what THIS company means by it (not the generic definition)
+- The JD's implicit hierarchy — the single most critical requirement vs. nice-to-haves
+</Accordion>
+
+<Accordion title="4. Domain Vocabulary Map">
+For this specific JD, the 5–8 vocabulary swaps that separate "outsider applying" from "insider who gets it."
+
+| Resume Currently Says | Should Say for This JD | Why |
+|-----------------------|------------------------|-----|
+| [current term] | [JD-specific replacement] | [why this company uses this language] |
+
+These swaps are derived purely from the JD's language and company context — not from a generic synonym list.
+</Accordion>
+
+<Accordion title="5. Fatal vs. Cosmetic Gap Ranking">
+Which missing JD keywords would cause immediate rejection vs. which are nice-to-have?
+
+- **Fatal gaps:** Binary capabilities the JD requires (e.g., a specific tool the JD title names), or phrases repeated 3+ times
+- **Serious gaps:** Preferred qualifications that most competitive candidates will have
+- **Cosmetic gaps:** Terms buried in preferred qualifications that most candidates also won't have
+
+For each gap: can it be bridged truthfully? Or is it a hard limitation of the candidate's background?
+</Accordion>
+
+<Accordion title="6. Methodology Transfer Test">
+For each of the candidate's top 5 resume achievements, the skill writes one sentence explaining how a domain expert at THIS company would see it mapping to their work.
+
+- If the sentence comes naturally: the resume has bridged the gap
+- If the sentence is forced: the resume has not made the transfer explicit enough
+- If the sentence cannot be written honestly: this is a hard gap, not a reframing problem
+</Accordion>
+
+<Accordion title="7. Competitive Landscape">
+Who else applies for this role?
+
+- What background does the "obvious fit" candidate have?
+- What does THIS candidate offer that the obvious fit does not? (e.g., high-venue publications, cross-scale breadth, platform building)
+- What does the obvious fit offer that this candidate does not? (e.g., domain-specific publications, direct tool experience)
+
+This determines what the resume must emphasize (unique strengths) and what it must bridge (gaps relative to the obvious fit).
+</Accordion>
+
+**Persistence rule:** The lens is built once per JD during the first critique pass. If the resume is revised and critiqued again, the same lens is reused — the skill does not re-research. The lens is only rebuilt if the JD itself changes.
+
+---
+
+## Part 1: Five-Perspective Read-Through
+
+Five reader personas read the document in strict time order. Each persona sees only what they would actually read in their time window — they do not know what comes later in the document.
+
+| Persona | Time | What They Read | Verdict Options |
+|---------|------|----------------|-----------------|
+| **ATS Bot** | 0 sec | Keyword pattern scan against JD | PASS / MARGINAL / FAIL |
+| **Recruiter** | 10 sec | Name, title/employer, education line, first 2 summary lines | FORWARD / MAYBE / REJECT |
+| **HR Screen** | 30 sec | Full summary + skills section headers + first bullet per position + education | PHONE SCREEN / BORDERLINE / PASS |
+| **Hiring Manager** | 2 min | Full document — domain expert read | INTERVIEW / MAYBE / NO |
+| **Technical Reviewer** | 10 min | Deep read: publications, quantitative claims, truthfulness audit | STRONG YES / YES / CONCERNS |
+
+### ATS Bot Details
+
+Extracts top 20 JD keywords and checks for verbatim vs. semantic match. Match rate threshold: ≥70% = PASS, 60–69% = MARGINAL, under 60% = FAIL. Any JD keyword appearing 3+ times in the JD but zero times in the resume is flagged as a high-priority gap.
+
+### Technical Reviewer Checks
+
+The technical reviewer runs a truthfulness table: for each quantitative claim, it is verified against the experience files and provenance flags. Contributing-author bullets are checked for hedged verbs. Publication coherence is assessed — do paper titles (which cannot be changed) create cognitive dissonance with the reframed bullets?
+
+---
+
+## Part 2: Eight-Dimension Scoring
+
+Each dimension is scored independently on a 1–10 scale, then multiplied by its weight to produce a weighted total out of 100.
+
+| # | Dimension | Weight | What Is Assessed |
+|---|-----------|--------|-----------------|
+| 1 | **ATS Keyword Match** | 15% | JD keyword coverage rate, verbatim vs. semantic, missing high-value terms |
+| 2 | **Summary** | 10% | Bridge sentence, target-domain language, prestige signals, forward-looking intent |
+| 3 | **Skills Section** | 10% | Group names (domain signal), content relevance, bold accuracy, no wasted entries |
+| 4 | **Bullet Quality** | 25% | Per-bullet JD alignment (HIGH/MEDIUM/LOW), reframing quality, quantification, action verbs |
+| 5 | **Publication Selection** | 10% | Venue prestige, tag relevance, first-author ratio, domain gap acknowledgment |
+| 6 | **Narrative Coherence** | 15% | Header-to-footer story arc, domain thread count, first-impression timing |
+| 7 | **Page Fill & Visual** | 5% | Budget compliance, orphan check, compile clean, acceptable slack |
+| 8 | **Credibility Signals** | 10% | Venue quality, metrics (papers, citations, awards), platform adoption, leadership evidence |
+
+### Score Interpretation Per Dimension
+
+| Score | Meaning |
+|-------|---------|
+| 9–10 | Essentially optimal for this candidate–JD pairing |
+| 8–8.5 | Strong; minor improvements possible but diminishing returns |
+| 7–7.5 | Good, but identifiable gaps that reframing could close |
+| 6–6.5 | Significant gaps — missing domain bridge, wrong vocabulary, weak bullets |
+| < 6 | Major problems — wrong role framing, overclaiming, or format violations |
+
+### Overall Score Interpretation
+
+| Overall Score | Assessment |
+|--------------|------------|
+| 85+ | At or near ceiling. Submit. |
+| 80–84 | Strong. 1–2 targeted improvements could push to ceiling. |
+| 75–79 | Good foundation but missing domain reframing or key bullets. |
+| 70–74 | First-draft quality. Needs systematic reframing pass. |
+| < 70 | Fundamental issues: wrong role type, missing sections, or accuracy problems. |
+
+---
+
+## Part 3: Interview Likelihood Assessment
+
+After scoring, the skill estimates interview probability from each reader's perspective, plus a ceiling analysis showing the maximum achievable score for this candidate–JD pairing.
+
+### Per-Reader Probabilities
+
+| Reader | Time | Question They Ask | Output |
+|--------|------|-------------------|--------|
+| ATS | 0 sec | "Do keywords match?" | Probability estimate + key factor |
+| Recruiter | 10 sec | "Credible for this level?" | Probability estimate + key factor |
+| HR | 30 sec | "Meets basic quals?" | Probability estimate + key factor |
+| Hiring Manager | 2 min | "Would I learn something in an interview?" | Probability estimate + key factor |
+| Technical Panel | 10 min | "Can this person do the work?" | Probability estimate + key factor |
+
+### Ceiling Analysis
+
+| Scenario | Estimated Score |
+|----------|----------------|
+| Current resume | `[X]` |
+| + Top 3 improvements applied | `[X + delta]` |
+| Theoretical max (this candidate + this JD) | `[X_max]` |
+| Hard ceiling (structural background gap) | `[X_ceiling]` |
+| What would close the gap | e.g., "1 domain publication → +3 pts" |
+
+The hard ceiling represents what cannot be improved by rewording — a genuine background gap that only new experience or publications would close.
+
+---
+
+## Parts 4–7: Remaining Sections
+
+<Accordion title="Part 4: Tiered Improvements (Ranked)">
+All identified improvements are listed in three tiers ranked by point impact.
+
+**Tier 1 — HIGH IMPACT (≥1 point each):**
+- Domain reframing that leaked through generation
+- Missing JD keywords that can be added truthfully
+- Bullet swaps (weak bullet → stronger unused achievement)
+- Missing or weak summary bridge sentence
+
+For each: Current text → Proposed text → Why → Expected point impact.
+
+**Tier 2 — MEDIUM IMPACT (0.3–0.9 points each):**
+- Minor vocabulary swaps
+- Publication tag refinements
+- Skills group name adjustments
+- One additional keyword insertion
+
+**Tier 3 — COSMETIC (under 0.3 points each):**
+- Keyword saturation reduction
+- Minor wording polish
+- Alternative publication selection
+
+**Verdict:** "Apply Tier 1 changes. Tier 2 are optional. Tier 3 are not worth the edit."
+</Accordion>
+
+<Accordion title="Part 5: Interview Bridge Points">
+For each major resume topic, the skill provides the verbal bridge the candidate should use if asked in an interview:
+
+| Resume Topic | Target Domain Equivalent | Opening Line for Interview |
+|---|---|---|
+| [Achievement X] | [How it maps to target] | "The same methodology I used for X applies directly to Y because..." |
+
+Includes 5–7 bridges covering highlights from all positions. This section converts resume claims into concrete interview talking points.
+</Accordion>
+
+<Accordion title="Part 6: Cover Letter Critique (Context-Aware)">
+If a cover letter exists in the session, the skill runs all of the following sub-checks. Institution type is detected first (Industry / National Lab / Academic), and checks adjust accordingly.
+
+**6A — Anti-Pattern Checklist:** No generic opener; does not rehash CV bullets; names a specific PI/group/product; has a "why THIS position" sentence; strongest qualification in paragraph 1; no defensive language about gaps; active closing call to action; credentials woven into body paragraphs.
+
+**6B — Tailoring Signal Checklist:** Names specific PI/group/program or product/technology; uses at least 3 JD terms that supplement (not duplicate) resume keywords; references institution mission, culture, or recent work; proposes a specific connection between the candidate's method and their need.
+
+**6C — Context-Specific Checks:** Different checks apply for Industry, National Lab, and Academic cover letters — including business value translation, mission alignment, lab vocabulary, PI naming, and future research direction.
+
+**6D — CL ATS Keyword Check:** Extracts 10 high-priority JD keywords and verifies 5–8 appear in the cover letter, supplementing (not duplicating) resume keywords.
+
+**6E — Structural Checks:** Word count targets (Industry: 250–300, Lab/Academic postdoc: 350–450, Academic faculty: 450–650), tone match, 3–5 quantified claims, domain pivot framing.
+
+**6F — Package Cohesion Check:** Resume/CV stands alone without the CL; CL deepens rather than introduces; no contradictions across documents; page budget correct (Resume + CL = 3pp, CV + CL = 6–7pp).
+</Accordion>
+
+<Accordion title="Part 7: Post-Generation Verification">
+Final mechanical pass/fail checklist run after all other critique parts.
+
+**Mechanical checks:**
+- All bullets within character limits (no OVER violations from `char_count.py`)
+- All multi-line bullets pass orphan check (last line ≥ 70% fill)
+- Page fill within budget (resume: ≤ 3 lines white space on page 2; CV: 45 rendered bullet lines)
+- No ordering errors in bullet sequencing
+
+**Content checks:**
+- ATS keywords present (≥ 70% match rate)
+- All provenance flags correct
+- No forbidden terms from KB Corrections Log
+- No inflation (contributing-author verbs hedged, no false claims)
+- Publication entries match `pub_metadata.md`
+- Cover letter claims traceable to resume/CV bullets
+
+**Structural checks:**
+- Company/institution name spelled correctly throughout
+- `.tex` file has complete preamble (will compile standalone)
+- Date format consistent (`Mon YYYY -- Mon YYYY`)
+- Email address matches `config.md`
+- Page count correct after compile
+
+**AI Fingerprint Scan (12-item checklist from `ai_fingerprint_rules.md`):**
+- Any Tier 1 banned word present? (delve, tapestry, leverage, pivotal, multifaceted, etc.)
+- More than 2 em-dashes in the document?
+- Any bullet ending with an `-ing` analysis phrase?
+- Three or more consecutive sentences of similar length?
+- Paragraph starts repeat the same structure?
+- CL opens with a generic phrase instead of a company-specific reference?
+- Passive voice in more than 20% of bullet verbs?
+
+Any failure in Part 7 is automatically flagged as a **Tier 1 fix** in Part 4.
+</Accordion>
+
+---
+
+## Multi-Pass Critiques
+
+For most applications, a single critique pass after generation is sufficient — the Achievement Reframing Guide used during generation ensures the first draft is already well-reframed. Multi-pass critique is needed only when:
+
+- Score is below 80 after the first critique (indicates systematic reframing failure)
+- The user requests specific changes and wants re-evaluation
+- A fundamentally new approach is tried (e.g., switching role-type framing mid-stream)
+
+In multi-pass mode, each subsequent critique states "Changes Since Pass N" at the top, only re-scores dimensions that changed, and tracks score trajectory across passes. The skill declares a ceiling when the score stops moving — typically after 2–3 passes.

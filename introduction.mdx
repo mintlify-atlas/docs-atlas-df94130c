@@ -1,0 +1,62 @@
+---
+title: "Claude Resume Kit: AI-powered resumes from research"
+sidebarTitle: "Introduction"
+description: "Claude Resume Kit extracts your papers once into a verified knowledge base, then generates tailored LaTeX resumes, CVs, and cover letters for every job."
+---
+
+Claude Resume Kit is a Claude Code-powered toolkit built for researchers and engineers who have lots of source material — papers, codebases, reports — and apply to many positions across different employer types. Unlike tools that rewrite a pasted resume, this kit builds a verified knowledge base from your actual work, then draws on it for every new application. It knows which papers are published versus under review, who did which parts of the work, and how to frame the same achievement differently for a faculty search versus an industry R&D role.
+
+## What makes it different
+
+<CardGroup cols={2}>
+  <Card title="Knowledge Base, Not a Rewriter" icon="database">
+    You extract your papers once through structured Q&A. Every application draws from verified source material — not a pasted resume that gets "improved" by guesswork.
+  </Card>
+  <Card title="Anti-Fabrication by Design" icon="shield-check">
+    Provenance flags on every achievement track publication status. Verb discipline rules prevent overclaiming. A corrections log stops known errors from reappearing.
+  </Card>
+  <Card title="AI Fingerprint Avoidance" icon="fingerprint">
+    Banned-word lists, structural anti-patterns, and a 12-item post-generation scan ensure output reads as human-written — no "delve," no em-dash overuse, no `-ing` bullet endings.
+  </Card>
+  <Card title="Multi-Perspective Critique" icon="users">
+    Five reader personas — ATS bot through deep technical reviewer — score your resume across 8 dimensions in a fresh context window, giving you interview likelihood estimates and ranked fixes.
+  </Card>
+  <Card title="Accuracy-First Priority Hierarchy" icon="lock">
+    Every generation decision follows: **Accuracy > Relevance > Impact > ATS > Brevity**. When choosing between impressive and accurate, the kit always chooses accurate.
+  </Card>
+  <Card title="LaTeX Output, Locally Compiled" icon="layer-group">
+    Claude generates `.tex` files you compile with `pdflatex`. No data leaves your machine beyond the Claude Code conversation. Templates handle all formatting.
+  </Card>
+</CardGroup>
+
+## How it works
+
+The kit has two phases: a one-time knowledge base setup, and a per-application generation loop. The table below shows the full pipeline from raw papers to a finished, critique-verified package.
+
+| Stage | Command | Input | Output |
+|-------|---------|-------|--------|
+| Extract papers | `/setup-extract <paper-path>` | PDF or `.tex` source | `knowledge_base/extractions/*.md` |
+| Build knowledge base | `/setup-build-kb` | All extractions | Experience files, bundles, support files |
+| Generate resume or CV | `/make-resume <jd-path>` | Job description | `output/<Folder>/e2e_*.tex` + session file |
+| Generate cover letter | `/make-cl [session-file]` | Session file | `output/<Folder>/*_cover_letter.tex` |
+| Critique package | `/critique [session-file]` | Session file + `.tex` files | `output/<Folder>/critique_*.md` |
+| Refine from feedback | `/edit-resume <tex-path> [critique-path]` | `.tex` + critique | Updated `.tex` files |
+
+The `/make-resume`, `/make-cl`, and `/critique` steps each run in a **separate Claude Code session** — fresh context produces better quality, and critique especially benefits from not having seen the generation process.
+
+## The six skills
+
+Each skill is a Claude Code slash command defined in `.claude/skills/<name>/SKILL.md`. They load the shared knowledge base and enforce the same accuracy rules.
+
+| Skill | Purpose | Input | Output |
+|-------|---------|-------|--------|
+| `/setup-extract` | Extract structured data from a paper | Paper path | `knowledge_base/extractions/*.md` |
+| `/setup-build-kb` | Synthesize KB from all extractions | All extractions | `resume_builder/{experience,bundles,support}/` |
+| `/make-resume` | Generate tailored resume or CV | JD path | `output/<Folder>/e2e_*.tex` + session file |
+| `/make-cl` | Generate matching cover letter | Session file | `output/<Folder>/*_cover_letter.tex` |
+| `/critique` | Independent quality review | Session file | `output/<Folder>/critique_*.md` |
+| `/edit-resume` | Edit resume/CV/CL from feedback | `.tex` + critique | Updated `.tex` files |
+
+<Note>
+  Ready to see it in action? The [Quickstart](/quickstart) runs the full pipeline using an included example knowledge base — no paper extraction required. You can have a compiled CV and cover letter in under five minutes.
+</Note>

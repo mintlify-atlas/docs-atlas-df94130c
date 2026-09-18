@@ -1,0 +1,64 @@
+---
+title: "Prerequisites for Claude Resume Kit"
+sidebarTitle: "Prerequisites"
+description: "Claude Resume Kit requires Claude Code CLI, a LaTeX distribution, and your research papers or project documentation. Here's what to get and where."
+---
+
+Before using Claude Resume Kit, you need three things in place: the Claude Code CLI (which runs the skills), a LaTeX distribution (which compiles the `.tex` output into PDFs), and your source material (papers, reports, or codebases to extract from). None of these require advanced configuration — the kit is designed so you drop papers in, answer Claude's questions, and get LaTeX out.
+
+## 1. Claude Code
+
+Claude Resume Kit's six skills are Claude Code slash commands. You need the Claude Code CLI installed and authenticated before any skill will run.
+
+- **Install and authenticate:** Follow the official guide at [docs.anthropic.com/en/docs/claude-code](https://docs.anthropic.com/en/docs/claude-code)
+- **Recommended models:** Claude Opus or Sonnet — the most capable Claude models. The skills involve multi-phase workflows with STOP points, character count enforcement, and structured decision logs. Less capable models may skip steps, miss provenance checks, or produce lower-quality output.
+- **Verify it works:** From any directory, run `claude` and confirm you reach the interactive prompt.
+
+## 2. LaTeX Distribution
+
+Claude generates `.tex` source files — you compile them locally with `pdflatex`. You never need to write or understand LaTeX; Claude handles all of it. You only need the compiler to produce PDFs.
+
+Choose the distribution for your operating system:
+
+| Platform | Distribution | Where to get it |
+|----------|-------------|-----------------|
+| Linux | TeX Live | [tug.org/texlive](https://tug.org/texlive/) — use your package manager: `apt install texlive-full` |
+| macOS | MacTeX | [tug.org/mactex](https://tug.org/mactex/) — includes TeX Live + GUI tools |
+| macOS (lighter) | TeX Live via MacTeX BasicTeX | Same page — smaller install, add packages as needed |
+| Windows | MiKTeX | [miktex.org](https://miktex.org/) — installs missing packages on first compile |
+
+Once installed, verify with:
+
+```bash
+pdflatex --version
+```
+
+You should see the TeX Live or MiKTeX version string. If `pdflatex` is not found, check that your distribution's `bin/` directory is on your `PATH`.
+
+<Note>
+  The included templates load several LaTeX packages (`mhchem`, `fontawesome5`, `hyperref`, among others). TeX Live Full and MacTeX include all of them. If you use a minimal install, MiKTeX will prompt to install missing packages on first compile; BasicTeX users may need to run `tlmgr install <package-name>` manually.
+</Note>
+
+## 3. Research Papers or Project Documentation
+
+The knowledge base is only as good as its source material. Claude extracts structured data from your papers during `/setup-extract` — asking you clarifying questions about your specific contributions, co-author roles, and publication status — and uses that data for every subsequent application.
+
+**Accepted formats:**
+
+- **PDF files** — standard compiled papers, preprints, reports
+- **`.tex` source files** — preferred when available; contain more methodological detail than the compiled PDF (exact equation parameters, code listings, supplementary notes)
+- **Project reports, technical memos, codebase documentation** — any structured source describing what you built and what it achieved
+
+**What matters:**
+
+- **Accuracy over quantity.** Five well-extracted first-author papers beat twenty shallow contributing-author entries. The extraction process asks about your specific role — if you only ran simulations but not experiments, that distinction is captured and enforced in every bullet.
+- **Publication status.** The kit's provenance system requires knowing whether each paper is published, under review, a preprint, or internal. Have this information ready when you run `/setup-extract`.
+- **Quantitative results.** The system is calibrated for STAR-format bullets. Papers with specific numbers — speedups, accuracy metrics, sample sizes, throughput figures — produce stronger output than papers with only qualitative claims.
+
+<Tip>
+  If you have both a PDF and `.tex` source for the same paper, place both in `knowledge_base/papers/`. The `/setup-extract` skill prefers `.tex` for content extraction (richer methodological detail) and uses the PDF for figures and tables. You get the best of both.
+</Tip>
+
+<Note>
+  The [Quickstart](/quickstart) requires only Claude Code — it uses the included example knowledge base for Dr. Jordan Chen and runs the full pipeline without any personal paper extraction. Try that first to see what the output looks like before extracting your own work.
+</Note>

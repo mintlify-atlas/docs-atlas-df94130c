@@ -1,0 +1,124 @@
+---
+title: "How the Claude Resume Kit knowledge base works"
+sidebarTitle: "Knowledge Base"
+description: "A three-layer architecture — extractions, experience files, and bundles — that forms the verified foundation every application draws from."
+---
+
+The knowledge base is the core of Claude Resume Kit. Instead of pasting a resume and letting Claude "improve" it (which invites hallucination), you extract verified data from your source papers once and store it in structured files. Every application then draws from that verified foundation — the knowledge base — rather than from Claude's in-context memory. This one-time setup is what makes anti-fabrication controls possible, because every bullet has a traceable origin.
+
+## Three-Layer Architecture
+
+The knowledge base is built in three layers, each synthesized from the layer below it.
+
+<Steps>
+  <Step title="Layer 1 — Extractions">
+    **Location:** `knowledge_base/extractions/*.md`
+
+    **Built by:** `/setup-extract <paper-path>`
+
+    One extraction file per paper. This is structured data pulled directly from your source material: the paper PDF, your thesis, or any other document. Each extraction captures everything a resume bullet might need to reference accurately.
+
+    **What an extraction contains:**
+
+    - **Metadata** — title, authors, year, journal, DOI, author position, publication status, citation count
+    - **Methods & Tools** — every tool, framework, and technique used (with versions where relevant)
+    - **Key Results** — quantitative outcomes with exact numbers
+    - **Collaboration & Scope** — who did what, what you personally owned vs. what was shared
+    - **Provenance** — full ownership, shared ownership, and no-ownership claims listed explicitly; safe verbs for bullets
+    - **Resume Bullet Seeds** — STAR-format seeds for each major achievement
+
+    For example, the extraction for "Deep Learning-Guided Screening of Thermostable Enzyme Variants" records: J. Chen designed the ML pipeline and ran all MD simulations (full ownership), co-developed the Snakemake workflow with M. Rivera (shared), and did not perform experimental validation (no ownership). That distinction is what forces the verb `Co-developed` instead of `Developed` in the resume bullet.
+
+    The inventory file `knowledge_base/extractions/_INVENTORY.md` tracks every extraction in a single table:
+
+    ```markdown
+    | # | File | Paper Title | Position | Author Role | Status |
+    |---|------|-------------|----------|-------------|--------|
+    | 1 | chen_acs_cat_2025.md | Deep Learning-Guided Screening... | Postdoc | first author | published |
+    | 2 | chen_proteins_2025.md | Enzyme Solvent Tolerance... | Postdoc | first author | under review |
+    | 3 | chen_bioinf_2024.md | Transfer Learning Framework... | Postdoc | co-first author | published |
+    ```
+
+    After running `/setup-extract` on each paper, you run `/setup-build-kb` once to synthesize everything into layers 2 and 3.
+  </Step>
+
+  <Step title="Layer 2 — Experience Files">
+    **Location:** `resume_builder/experience/*.md`
+
+    **Built by:** `/setup-build-kb`
+
+    One file per position (e.g., `experience_postdoc_lakewood.md`, `experience_phd_westfield.md`). Each file synthesizes all extractions from that position into achievement entries — the ready-to-use building blocks for every resume and CV.
+
+    **What an experience file achievement entry looks like:**
+
+    ```markdown
+    ### L1: ML-Guided Enzyme Stability Screening
+    **Source:** Chen et al., ACS Catalysis 2025
+    **Methods:** ESM-2, GROMACS, replica exchange MD, Python/BioPython
+    **Quantitative:** 0.82 Spearman, 3,000x throughput, 8,500 variants, 5 confirmed hits
+    **Bullet (2L):** Fine-tuned ESM-2 protein language model on 45K experimental melting
+      temperatures, achieving 0.82 Spearman correlation and enabling 3,000$\times$ throughput
+      screening of 8,500 enzyme variants for industrial thermostability.
+    **Bullet (3L):** Fine-tuned ESM-2 protein language model on 45K experimental melting
+      temperatures with transfer learning, achieving 0.82 Spearman correlation and 3,000$\times$
+      throughput over experimental screening --- identified 7 thermostable lipase variants with
+      15$+$ $^\circ$C stability gain, 5 experimentally confirmed via differential scanning
+      calorimetry.
+    **Tags:** academic, industry_rd
+    **Significance:** Demonstrates independent ML pipeline development and protein engineering
+      impact. 3,000x speedup is a concrete metric. Published first-author in high-impact journal.
+    ```
+
+    Each achievement has pre-written bullet variants at every length — `1L` (one rendered line), `2L` (two lines), and `3L` (three lines) — calibrated to the character budgets of the included LaTeX templates. The `Tags` field controls which role-type audiences this achievement is relevant for. The `Significance` field explains the strategic value, which `/make-cl` uses for cover letter framing.
+
+    You can edit experience files directly after `/setup-build-kb` creates them — add bullet variants, adjust wording, correct numbers. The files are yours.
+  </Step>
+
+  <Step title="Layer 3 — Bundles">
+    **Location:** `resume_builder/bundles/*.md`
+
+    **Built by:** `/setup-build-kb`
+
+    One file per target role type (e.g., `bundle_academic.md`, `bundle_industry_rd.md`). A bundle is the strategic layer: it tells `/make-resume` not just what achievements exist, but which ones matter for this audience, in what order, and how to reframe them.
+
+    Each bundle has five sections:
+
+    | Section | Contents |
+    |---------|----------|
+    | **S1: Role Profile + Priority Matrix** | What this audience values, ranked. Achievement priority table with reframing notes. |
+    | **S2: Summary Guide** | Tagline patterns, building blocks, do's and don'ts for the summary section. |
+    | **S3: Achievement Reframing Map** | How each achievement translates into this audience's vocabulary. |
+    | **S4: Skills Guide** | Which tools to bold, which to include, how to group them for this role type. |
+    | **S5: Cover Letter Guide** | Opening hook options, paragraph templates, anti-patterns to avoid. |
+  </Step>
+</Steps>
+
+## The Priority Matrix: How Selection Works
+
+The S1 Priority Matrix in each bundle is the core selection mechanism. When `/make-resume` reads a JD and selects bullets, it consults this table — not a generic ranking — to decide which achievements to use and how to present them.
+
+Here is the actual Priority Matrix from `bundle_academic.md`:
+
+| Priority | Achievement | Why | Reframing Notes |
+|----------|-------------|-----|-----------------|
+| 1 (must) | L1: Enzyme Stability Screening | Core ML pipeline development + high-impact application | Lead bullet. Emphasize 3,000x throughput and independent development. |
+| 2 (must) | L4: Transfer Learning Framework | Open-source impact, community adoption | Highlight GitHub stars and external adoption as evidence of research maturity. |
+| 3 (must) | L3: Automated Screening Pipeline | Infrastructure contribution, team enablement | Frame as "enabling 6 researchers" — departments value force multipliers. |
+| 4 (strong) | L2: Enzyme Solvent Tolerance | Deeper enzyme engineering expertise | Natural extension of stability work into industrial conditions. Note under-review status. |
+| 5 (strong) | L5: Unfolding Pathway Analysis | Mechanistic insight from simulations | Use if JD mentions dynamics, thermodynamics, or structural biology. |
+| 6 (if room) | L6: Mentorship | Teaching and advising fit | Include for faculty positions; optional for postdoc applications. |
+
+The `industry_rd` bundle has a different Priority Matrix — the same achievements ranked differently, with different reframing notes. `/make-resume` selects the correct bundle automatically from the JD analysis, then follows the matrix to build the bullet plan.
+
+## Why This Architecture Matters
+
+Without the knowledge base, Claude generates from whatever you paste into context — a rough draft resume, a LinkedIn profile, your own memory of what you did. Errors compound at every step. With the knowledge base:
+
+- **Bullet variants are pre-verified.** Character counts are pre-calculated. Numbers are confirmed against source papers.
+- **Verb discipline is enforced.** The experience file already marks which achievements need `Co-developed` vs `Developed`. Generation rules enforce this at output time.
+- **Provenance flags are applied before generation.** Skills read `config.md` before writing a single bullet. "Under review" papers are never claimed as published.
+- **The Priority Matrix drives selection.** `/make-resume` builds a bullet plan from the matrix, presents it for confirmation, and generates the final `.tex`. No manual input beyond reviewing the plan.
+
+<Note>
+  You can manually edit experience files and bundles after `/setup-build-kb` creates them. Add missing achievements, adjust bullet text, change priority rankings, add new role types. The files are plain Markdown — the skills treat them as authoritative on every subsequent run.
+</Note>

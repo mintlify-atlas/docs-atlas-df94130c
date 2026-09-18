@@ -1,47 +1,112 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get started with Claude Resume Kit in 5 minutes"
+sidebarTitle: "Quickstart"
+description: "Run the full resume pipeline using included example data — no personal paper extraction needed. See a compiled CV, cover letter, and critique in minutes."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
-
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
-
-## Prerequisites
-
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+The repo ships with a complete example knowledge base for a fictional researcher: **Dr. Jordan Chen**, a computational biologist applying for a tenure-track faculty position. The example includes extracted papers, experience files, a role-type bundle, and a job description for an Assistant Professor role at Whitfield University. This quickstart runs the full pipeline against that data — JD analysis, bullet plan, LaTeX generation, cover letter, and critique — without requiring any personal papers or configuration.
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+
+  <Step title="Clone the repository">
+    Clone the repo and move into it. No installation step is needed — Claude Code reads the skill files directly.
 
     ```bash
-    npm install your-package
+    git clone https://github.com/ARPeeketi/claude-resume-kit.git
+    cd claude-resume-kit
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+
+  <Step title="Start Claude Code">
+    Launch Claude Code from the project root. The project instructions in `CLAUDE.md` are auto-loaded, giving Claude the file map, anti-fabrication rules, and LaTeX conventions.
 
     ```bash
-    your-cli init
+    claude
     ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
 
-    ```bash
-    your-cli start
-    ```
+    <Note>
+      The skills are designed for Claude's most capable models — Opus or Sonnet. If you have model selection available, prefer those. Less capable models may skip STOP points or produce lower-quality output.
+    </Note>
   </Step>
+
+  <Step title="Generate the example resume">
+    Run `/make-resume` pointing at the included example job description:
+
+    ```
+    /make-resume JDs/example_jd.txt
+    ```
+
+    The skill runs in three phases, with mandatory STOP points between each:
+
+    1. **Phase 0 — Research & Session Setup:** Claude reads the JD (Whitfield University, Computational Protein Engineering), runs web searches for company context, classifies requirements as Direct / Bridge / Gap, selects the `bundle_academic.md` role-type bundle, and creates a session file at `output/Whitfield_ProteinEng/session_whitfield_proteineng.md`. It then **stops and presents** its analysis — role type, format choice (5-page CV), and framing strategy — and waits for your confirmation.
+
+    2. **Phase 1 — Bullet Plan:** After you confirm, Claude reads the experience files and presents a prioritized bullet plan for each position: which achievements to include, which variant (2L/3L), and why each maps to the JD. It **stops again** and waits for you to approve or modify the plan.
+
+    3. **Phase 2 — Generation:** With the confirmed plan, Claude generates the full CV section by section — summary, skills, all experience bullets — running character count checks and compiling with `pdflatex` at the end. It **stops** and presents the compilation summary.
+
+    The output file is `output/Whitfield_ProteinEng/e2e_whitfield_proteineng_cv.tex`.
+  </Step>
+
+  <Step title="Generate the cover letter and run the critique">
+    Each subsequent step runs in a **fresh Claude Code session** for best quality. Use `/clear` between steps.
+
+    **Generate the cover letter:**
+
+    ```
+    /clear
+    /make-cl output/Whitfield_ProteinEng/session_whitfield_proteineng.md
+    ```
+
+    Claude loads the session file, reads the finished CV, and writes a 4-paragraph academic cover letter with verified hooks. It compiles and presents a summary of word count, page count, and the specific details used to reference Whitfield's research.
+
+    **Run the critique:**
+
+    ```
+    /clear
+    /critique output/Whitfield_ProteinEng/session_whitfield_proteineng.md
+    ```
+
+    The critique skill runs the full 8-part assessment: domain-specialist lens, five reader personas, 8-dimension scoring, interview likelihood estimates, tiered improvements, and a 12-item AI fingerprint scan. Results are saved to `output/Whitfield_ProteinEng/critique_whitfield_proteineng.md`.
+  </Step>
+
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## Expected output files
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
+After completing all three sessions, the `output/Whitfield_ProteinEng/` folder contains:
+
+```
+output/Whitfield_ProteinEng/
+├── session_whitfield_proteineng.md       # Per-JD state: decisions, bullet plan, status
+├── e2e_whitfield_proteineng_cv.tex       # 5-page CV (LaTeX source)
+├── e2e_whitfield_proteineng_cv.pdf       # Compiled PDF
+├── e2e_whitfield_proteineng_cover_letter.tex
+├── e2e_whitfield_proteineng_cover_letter.pdf
+└── critique_whitfield_proteineng.md      # 8-part scored critique
+```
+
+## Compile the LaTeX yourself
+
+The `.tex` files compile with a standard `pdflatex` invocation. From the project root:
+
+```bash
+pdflatex -output-directory=output/Whitfield_ProteinEng \
+  output/Whitfield_ProteinEng/e2e_whitfield_proteineng_cv.tex
+```
+
+Run it twice if you see reference warnings on the first pass — this is normal LaTeX behavior.
+
+<Tip>
+  Once you've seen the example pipeline end to end, you're ready to use your own papers. The [Full Setup](/setup/configure) guide walks through editing `config.md`, running `/setup-extract` on your own PDFs, building your knowledge base with `/setup-build-kb`, and customizing the LaTeX templates.
 </Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Full Setup" icon="gear" href="/setup/configure">
+    Configure the kit for your own papers, positions, and role types. Edit `config.md`, fill in the LaTeX templates, and build your knowledge base.
+  </Card>
+  <Card title="Concepts: Knowledge Base" icon="database" href="/concepts/knowledge-base">
+    Understand how extractions become experience files, how bundles encode role-type strategy, and how session files track per-JD decisions.
+  </Card>
+</CardGroup>

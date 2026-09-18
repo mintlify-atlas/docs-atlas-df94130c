@@ -1,0 +1,135 @@
+---
+title: "Frequently asked questions about Claude Resume Kit"
+sidebarTitle: "FAQ"
+description: "Common questions about LaTeX, paper extraction, role types, model selection, session recovery, and the system's anti-fabrication design."
+---
+
+Below are answers to the most common questions about setting up and using Claude Resume Kit. Questions are organized from quickstart concerns through advanced customization and system design.
+
+<Accordion title="Do I need to know LaTeX?">
+No. Claude generates the `.tex` files. You only need to run `pdflatex` to compile them:
+
+```bash
+pdflatex output/Acme/e2e_acme_engineer_resume.tex
+```
+
+The `.cls` classes and `.tex` templates handle all formatting, spacing, and layout. You fill in the FIXED sections once (education, publications, awards, header) and Claude writes the variable content (summary, skills, bullets) for each JD.
+
+If you want to customize fonts, colors, or section order, you can edit the `.cls` and `.tex` files directly — but this is optional. The defaults work as-is.
+</Accordion>
+
+<Accordion title="How many papers should I extract?">
+Extract all papers where you are first author or co-first author, plus the key contributing-author papers that demonstrate your most important methods or results. 
+
+Quality matters more than quantity. Five well-extracted papers with accurate quantitative results, clear author attribution, and well-documented methods will produce better output than twenty shallow extractions. Each extraction feeds into one experience file, and each experience file feeds into every resume and CV you generate — the investment compounds across all applications.
+</Accordion>
+
+<Accordion title="Can I use this for non-academic roles?">
+Yes. The framework supports any role type — you define them in `config.md`. Industry R&D, consulting, data science, computational engineering, national lab, and biotech roles all work. The key steps are:
+
+1. Define your role types in `config.md` under **Role Types**
+2. Add keyword mappings in the **Role-Type Decision Tree**
+3. Run `/setup-build-kb` — it creates one bundle per role type
+
+The bundle contains a Priority Matrix and Reframing Map tailored to that audience. The `/make-resume` skill uses the bundle to reframe your academic achievements into language the target employer recognizes.
+</Accordion>
+
+<Accordion title="What if I don't have a Google Scholar or ORCID?">
+Leave those fields blank in `config.md` and remove the corresponding icon lines from `resume_template.tex` and `cv_template.tex`. The `.cls` files and skills adapt to whatever contact fields are present in the templates. You can add those profiles later and update the templates at that point — it does not require regenerating existing session files.
+</Accordion>
+
+<Accordion title="How do I update after publishing new papers?">
+Run `/setup-extract` on the new paper to create a new extraction file, then update the relevant experience file and re-run `/setup-build-kb` to refresh your bundles. Existing session files (for JDs you have already applied to) are not affected — they reference specific bullets by achievement, not by bundle version. New applications will pick up the updated bundle automatically.
+
+Also update the Provenance Flags in `config.md` to change the paper's status from `under review` to `published` and update the correct framing.
+</Accordion>
+
+<Accordion title="Can I use my own resume format instead of the included templates?">
+Yes. The `.cls` files define the visual style — you can modify them or replace them with your own class file. The skills generate content based on the `[GENERATE: ...]` and `[FIXED: ...]` markers in the `.tex` template, not on the visual style. As long as those markers are present in your template, the skills will write content into the correct locations.
+
+If you bring your own template, also check the character budget tables in `resume_builder/reference/critical_rules.md` — the default budgets assume `textwidth=7.5in` at 10pt (resume) or 11pt (CV). If your geometry differs, update the character limits accordingly.
+</Accordion>
+
+<Accordion title="Can multiple people use the same kit?">
+Each person needs their own clone of the repository with their own `config.md`, knowledge base (`knowledge_base/`), experience files (`resume_builder/experience/`), bundles (`resume_builder/bundles/`), and templates. The framework files (skills, reference docs, helpers) are shared and unchanged — only the personal content is per-person.
+
+Do not share a single repository across multiple users. The session files, provenance flags, and KB corrections are personal and must not be mixed.
+</Accordion>
+
+<Accordion title="What Claude model should I use?">
+Use Claude Opus or Sonnet — the most capable models available. The skills require multi-step reasoning across large context windows: reading multiple reference files, enforcing character budgets per bullet, running five personas during critique, and maintaining provenance discipline throughout. Less capable models may skip steps, miss character limit violations, produce lower-quality bullets, or omit provenance checks.
+
+If you are using Claude Code, select the most capable model available in your project settings before running any skill.
+</Accordion>
+
+<Accordion title="Why use separate sessions for resume, cover letter, and critique?">
+Token efficiency and output quality — especially for critique. Each skill runs in a dedicated context window:
+
+- **Session 1 — `/make-resume`:** Full JD research, bullet planning, and generation. Context is loaded with experience files, bundles, and reference docs.
+- **Session 2 — `/make-cl`:** Loads the session file from Session 1 and generates the cover letter. Fresh context avoids carrying generation biases.
+- **Session 3 — `/critique`:** Reads the completed documents with fresh eyes. The critique's job is to find what the generation session normalized after hours in the same document. The same context that generated the resume cannot give it an unbiased review.
+
+The session file persists all state between sessions — JD analysis, bullet decisions, framing rationale — so nothing is lost when you `/clear`.
+</Accordion>
+
+<Accordion title="What if a session is interrupted mid-generation?">
+Session files track the current status and next step. Every skill writes a `Status: Next:` field to the session file before each STOP point. If a session is interrupted, open the session file and look for:
+
+```markdown
+## Status
+Phase: 2 — Generation
+Next: /make-resume (resume already done, continuing from CV bullets, position 2 of 3)
+```
+
+Copy the next command exactly as written and start a fresh session. The skill reads the session file at startup and picks up from where you left off. You do not need to restart from Phase 0.
+</Accordion>
+
+<Accordion title="How do I handle papers with multiple authors where my contribution was limited?">
+Use hedged verbs and be specific about what you personally did. The verb discipline rules are:
+
+- **Full-ownership verbs** (Developed, Built, Engineered, Designed) — only for work you performed independently
+- **Hedged verbs** (Contributed, Provided, Supported, Co-developed) — for shared or contributing-author work
+
+The `/setup-extract` clarifying questions capture this explicitly: "What was your specific contribution?" and "Were results from your experiments alone or shared with collaborators?" Those answers flow into the experience file and into every bullet generated from that achievement.
+
+Also add an entry to the **KB Corrections Log** in `config.md` for any co-developed tool or shared result — for example: `"Co-developed with M. Rivera. Always use 'Co-developed', never 'Developed' alone."` The skills check this log before every generation.
+</Accordion>
+
+<Accordion title="What does the skills config format mean (e.g., 4-3-2-2-2)?">
+The skills config string defines the technical skills section layout. Each number is the line count for one group, and the count of numbers is the number of groups:
+
+- `4-3-2-2-2` = 5 groups with 4, 3, 2, 2, 2 lines each = **13 total lines** (resume default)
+- `4-4-3-3-3` = 5 groups with 4, 4, 3, 3, 3 lines each = **17 total lines** (CV default)
+
+Each line in the skills section is one dash-separated list of tools within a group. The total line count directly trades off against available variable bullet count in the experience section — adding one skills line removes one available experience bullet from the page budget. Set this in `config.md` under **Document Preferences**.
+</Accordion>
+
+<Accordion title="Can I have more than two role types?">
+Yes. Add as many role types as you need in `config.md` under **Role Types** — one row per role type. Each gets its own bundle file created by `/setup-build-kb`. Common configurations include three or four role types: for example, Academic, Industry R&D, National Lab, and Consulting.
+
+Each bundle takes time to generate well during `/setup-build-kb`, so focus on role types you are actively applying to. You can add new role types later and regenerate only the new bundles without touching existing ones.
+</Accordion>
+
+<Accordion title="What is the accuracy priority hierarchy?">
+**Accuracy > Relevance > Impact > ATS > Brevity**
+
+This is the tiebreaker for every generation decision. When choosing between a more impressive but less accurate claim and an accurate but less impressive one, always choose accuracy. This hierarchy applies in this order:
+
+1. **Accuracy** — is the claim verifiable against the source paper and provenance flags?
+2. **Relevance** — does it address what the JD asks for?
+3. **Impact** — does it include quantified results and significance?
+4. **ATS** — does it match the JD's vocabulary?
+5. **Brevity** — is it within the character budget?
+
+Brevity is last. A bullet that is accurate, relevant, and well-quantified is not rewritten to be shorter just to hit a tighter character target — it is rewritten only if it violates the hard maximum.
+</Accordion>
+
+<Accordion title="What are the AI fingerprint rules, and why do they matter?">
+The `resume_builder/support/ai_fingerprint_rules.md` file lists patterns that are statistically associated with AI-generated text and that human readers (and AI detectors) recognize immediately. The rules cover:
+
+- **Banned words (Tier 1):** delve, tapestry, multifaceted, pivotal, leverage (as verb), utilize, harness, spearhead, cornerstone, groundbreaking, cutting-edge, innovative (unless quoting a JD)
+- **Banned structural patterns:** em-dash overuse (max 2 per document), `-ing` analysis endings on bullets (the #1 structural AI marker), uniform sentence length in cover letters, same-structure paragraph openers
+- **A 12-item post-generation scan** Claude runs on every document before presenting it to the user
+
+These rules matter because hiring managers and technical reviewers develop strong intuitions for AI-written text. A resume or cover letter flagged as AI-generated loses credibility even if every claim is accurate. The primary defense is the generation protocol itself — specific facts from experience files, named entities, JD-specific vocabulary. The fingerprint rules are the secondary safety net.
+</Accordion>

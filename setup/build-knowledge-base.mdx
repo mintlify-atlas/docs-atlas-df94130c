@@ -1,0 +1,173 @@
+---
+title: 'Build your knowledge base from paper extractions'
+sidebarTitle: 'Build KB'
+description: 'Run /setup-build-kb to synthesize all extractions into experience files, bundles, skills taxonomy, pub metadata, and cover letter support files.'
+---
+
+Once you have extraction files for your papers, `/setup-build-kb` turns them into the structured knowledge base that every generation skill reads. It works through six sequential phases — each producing a specific set of files — and presents a readiness checklist at the end so you know exactly what's ready before running your first `/make-resume`. You only need to do a full build once; after that, individual phases can be re-run when you update an extraction or add a new paper.
+
+## Command syntax
+
+Full build (all six phases):
+
+```
+/setup-build-kb
+```
+
+Run a specific phase or component by name:
+
+```
+/setup-build-kb experience
+/setup-build-kb bundles
+/setup-build-kb status
+```
+
+Other accepted component names: `skills`, `pubs`, `reframing`, `significance`. The `status` argument shows what's already built and what's missing without rebuilding anything.
+
+---
+
+## The six build phases
+
+<Steps>
+
+### Build Experience Files
+
+One file per position, written to `resume_builder/experience/experience_<position_key>.md`. Each file groups all achievements from that position and stores pre-written bullet variants at every length.
+
+**Each achievement entry contains:**
+
+| Field | What it stores |
+|---|---|
+| `Source` | Extraction filename and paper citation |
+| `User's role` | First author / contributing / sole developer |
+| `Status` | Published / under review / draft / internal |
+| `Context` | 1–2 sentences on the problem and why it matters |
+| `2L bullet` | 2-line STAR-format bullet, ~180–210 rendered characters (resume default) |
+| `3L bullet` | 3-line version, ~270–310 rendered characters (CV use) |
+| `1L bullet` | Condensed 1-line version, ~90–110 rendered characters (tight budgets) |
+| `Key skills` | Comma-separated skills this achievement demonstrates |
+| `ATS keywords` | Domain-specific terms an ATS might scan for |
+| `Reframing notes` | How to emphasize different aspects for different role types |
+
+<Warning>
+After grouping extractions by position, Claude presents the groupings and waits for your confirmation before writing any experience files. This is a mandatory stop — verify that every achievement is credited to the right position before proceeding.
+</Warning>
+
+### Build Skills Taxonomy
+
+Written to `resume_builder/support/skills_taxonomy.md`. A categorized inventory of all technical skills found across extractions, organized by proficiency level with evidence citations.
+
+**Proficiency levels:**
+- **Expert** — Multiple first-author papers, developed custom tools
+- **Proficient** — Used extensively in published work, comfortable teaching
+- **Familiar** — Used in one project, or contributed to someone else's implementation
+
+Each skill entry includes the source paper IDs as evidence and a resume weight (`HIGH`, `MED`, or `LOW`) that tells `/make-resume` how to prioritize skills under space constraints.
+
+### Build Publication Metadata
+
+Written to `resume_builder/support/pub_metadata.md`. Structured publication data for use in resume/CV generation, organized into three sections:
+
+- **First-Author / Co-First** — primary publications with journal, year, status, and key topic
+- **Contributing Author** — papers where you have a significant but non-lead role
+- **Under Review / In Preparation** — with provenance notes matching `config.md` flags
+
+### Build Achievement Reframing Guide
+
+Written to `resume_builder/support/achievement_reframing_guide.md`. For each achievement, this file stores a significance line and a per-role-type framing table.
+
+```markdown
+### [Achievement ID]: [Title]
+**Significance:** [One sentence — why this matters broadly]
+
+| Role Type | Emphasis | Lead Verb | Framing Angle |
+|-----------|----------|-----------|---------------|
+| Academic  | HIGH     | Developed | emphasize method development and throughput |
+| Industry R&D | MEDIUM | Applied  | bridge to industrial enzyme engineering |
+
+**Overclaiming warning:** [if applicable]
+```
+
+After presenting the reframing guide summary, Claude stops and asks whether the priority mapping looks right for your target roles before building bundles.
+
+### Build Bundles
+
+One file per role type defined in `config.md`, written to `resume_builder/bundles/bundle_<role_type>.md`. Each bundle has five sections that generation skills consult when selecting and framing achievements:
+
+| Section | Contents |
+|---|---|
+| **S1: Role Profile & Priority Matrix** | What this audience values, positioning strategy, ranked achievement priorities |
+| **S2: Summary Guide** | Headline pattern, building blocks, summary do's and don'ts |
+| **S3: Achievement Reframing Map** | Per-achievement framing angle and key metric for this role type |
+| **S4: Skills Guide** | Which tools to bold, must-include ATS skills, omit list, group strategy |
+| **S5: Cover Letter Guide** | Opening hook patterns, paragraph templates, "why them" angle, anti-patterns |
+
+Here is the Priority Matrix from the example academic bundle — this is the table `/make-resume` uses to rank achievements when selecting bullets:
+
+```markdown
+## S1: Role Profile — Priority Matrix
+
+| Priority | Achievement | Why | Reframing Notes |
+|----------|------------|-----|-----------------| 
+| 1 (must) | L1: Enzyme Stability Screening | Core ML pipeline + high-impact application | Lead bullet. Emphasize 3,000x throughput and independent development. |
+| 2 (must) | L4: Transfer Learning Framework | Open-source impact, community adoption | Highlight GitHub stars and external adoption as research maturity evidence. |
+| 3 (must) | L3: Automated Screening Pipeline | Infrastructure contribution, team enablement | Frame as "enabling 6 researchers" -- departments value force multipliers. |
+| 4 (strong) | L2: Enzyme Solvent Tolerance | Deeper enzyme engineering expertise | Natural extension of stability work. Note under-review status. |
+| 5 (strong) | L5: Unfolding Pathway Analysis | Mechanistic insight from simulations | Use if JD mentions dynamics, thermodynamics, or structural biology. |
+| 6 (if room) | L6: Mentorship | Teaching and advising fit | Include for faculty positions; optional for postdoc applications. |
+```
+
+### Build Significance Research Files
+
+One file per position, written to `resume_builder/support/significance_<position_key>.md`. These files provide field context for cover letters — NOT for resume bullets. Each major achievement gets a section covering the problem it addresses, competing approaches, why it matters (market size, funding priorities, industry need), and what makes your approach distinct.
+
+</Steps>
+
+---
+
+## Readiness checklist
+
+At the end of a full build, Claude presents this checklist. All items should be checked before you run your first `/make-resume`:
+
+<Accordion title="KB readiness checklist">
+
+| Check | Target |
+|---|---|
+| At least 1 experience file with 5+ achievements | `resume_builder/experience/*.md` |
+| Skills taxonomy with 20+ skills | `resume_builder/support/skills_taxonomy.md` |
+| At least 1 bundle matching a target role type | `resume_builder/bundles/bundle_*.md` |
+| Publication metadata complete | `resume_builder/support/pub_metadata.md` |
+| Reframing guide covers all achievements | `resume_builder/support/achievement_reframing_guide.md` |
+| Significance files present for CL depth | `resume_builder/support/significance_*.md` |
+
+If all items pass, Claude tells you: _"Knowledge base is ready. Save a JD to `JDs/` and run `/make-resume JDs/<filename>.txt`"_
+
+If gaps remain, it lists exactly which phase to re-run.
+
+</Accordion>
+
+---
+
+## Re-running individual phases
+
+<Tip>
+You don't need to rebuild everything when you add or edit a paper. Re-run only the phases that depend on changed data:
+
+- Added a new extraction → `setup-build-kb experience` then `setup-build-kb bundles`
+- A paper's publication status changed → update `config.md` Provenance Flags, then `setup-build-kb experience`
+- Edited bundle priorities → `setup-build-kb bundles`
+- Added a new role type to `config.md` → `setup-build-kb bundles`
+</Tip>
+
+---
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card title="Generate a Resume" icon="file-lines" href="/generating/make-resume">
+    Drop a JD into `JDs/` and run `/make-resume` to get a tailored `.tex` file with JD-matched bullets and skills.
+  </Card>
+  <Card title="Knowledge Base Concepts" icon="database" href="/concepts/knowledge-base">
+    Learn how experience files, bundles, and provenance flags fit together in the generation pipeline.
+  </Card>
+</CardGroup>

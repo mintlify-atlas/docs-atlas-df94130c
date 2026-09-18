@@ -1,0 +1,155 @@
+---
+title: "Score and improve your package with /critique"
+sidebarTitle: "/critique"
+description: "Eight scoring dimensions, five reader personas, interview likelihood estimates, and tiered improvements — run in a fresh session for unbiased analysis."
+---
+
+`/critique` runs a comprehensive review of your full application package in a fresh context window. Five simulated reader personas — from an ATS bot to a deep technical reviewer — each evaluate the documents from their own vantage point. Eight weighted dimensions produce a score out of 100, an interview likelihood estimate, and a tiered list of improvements ranked by point impact.
+
+## Command Syntax
+
+Pass the session file to critique the full package (resume + cover letter):
+
+```bash
+/critique output/Whitfield_ProteinEng/session_whitfield_proteineng.md
+```
+
+You can also pass the session name directly:
+
+```bash
+/critique whitfield_proteineng
+```
+
+If no cover letter is found, `/critique` evaluates the resume alone and notes that package cohesion was not assessed.
+
+## Recovery Logic
+
+| Session Status | Action |
+|---------------|--------|
+| Cover Letter: not DONE | "CL not yet generated. Run `/make-cl` first." — stops. |
+| Critique: CURRENT | "Already critiqued (score X/100). Re-run?" — waits for confirmation. |
+| Critique: STALE | "Edits made since last critique. Re-critiquing." — proceeds. |
+| Critique: PENDING | Proceeds immediately. |
+
+## The Eight Critique Sections
+
+`/critique` produces all eight sections in every run. Each section is persisted to `output/<FolderName>/critique_<name>.md`.
+
+<Accordion title="1 — Domain-Specialist Lens">
+  Built fresh for every JD from the session file's Company Context and JD Analysis. If the session file lacks those sections, 1–2 web searches fill the gap. The lens contains seven elements:
+
+  1. **Reviewer persona construction** — who reads this resume, what they do daily, what makes them roll their eyes
+  2. **Company research** — core business, R&D culture (academic vs patent-driven vs product-shipping), recent bets
+  3. **JD vocabulary extraction** — 8–10 most important terms ranked by frequency, placement, and binary vs spectrum nature
+  4. **Domain vocabulary map** — 5–8 vocabulary swaps that signal "insider who gets it" vs "outsider applying generically"
+  5. **Fatal vs cosmetic gap ranking** — which missing keywords cause rejection (binary capabilities, title terms, 3× repeated) vs nice-to-haves
+  6. **Methodology transfer test** — for each top achievement, one sentence explaining how a domain expert at THIS company maps it to their work
+  7. **Competitive landscape** — who the "obvious fit" candidate is, what makes you different, what they offer that you don't
+
+  The lens is built once per JD and reused across subsequent critiques — it is never rebuilt unless the JD itself changes.
+</Accordion>
+
+<Accordion title="2 — Five-Perspective Read-Through">
+  Each persona reads only what they would actually read in their real-world time window:
+
+  | Persona | Time | Decision |
+  |---------|------|----------|
+  | **ATS Robot** | 0 sec | Keyword scan — PASS / FAIL |
+  | **Recruiter Glance** | 10 sec | Forward / Maybe / Reject |
+  | **HR Screen** | 30 sec | Phone screen / Borderline / Pass |
+  | **Hiring Manager** | 2 min | Interview / Maybe / No |
+  | **Technical Reviewer** | 10 min | Truthfulness audit, consistency check |
+
+  The ATS check extracts the top 20 JD keywords and scores verbatim vs semantic matches — ≥70% is PASS, 60–69% is MARGINAL, under 60% is FAIL. The Technical Reviewer runs a full truthfulness audit against provenance flags and a verb discipline check on contributing-author bullets.
+</Accordion>
+
+<Accordion title="3 — Eight-Dimension Scoring">
+  Scores are assigned independently per dimension, then multiplied by weight and summed to 100. See the full scoring table in the [Scoring Dimensions](#scoring-dimensions) section below.
+</Accordion>
+
+<Accordion title="4 — Interview Likelihood">
+  Per-reader probability estimates and a ceiling analysis:
+
+  | Scenario | Score |
+  |----------|-------|
+  | Current resume | X |
+  | + Top 3 improvements applied | X + delta |
+  | Theoretical max (this candidate + this JD) | X_max |
+  | Hard ceiling (structural background gap) | X_ceiling |
+  | What would close the gap | e.g., "1 domain publication → +3 pts" |
+</Accordion>
+
+<Accordion title="5 — Tiered Improvements">
+  Every identified improvement is listed across three tiers with estimated point impact:
+
+  - **Tier 1 (≥ 1 pt each):** Domain reframing gaps, missing fatal-gap keywords, weak summary bridge sentence, bullet swaps. These are the only changes worth prioritizing.
+  - **Tier 2 (0.3–0.9 pts):** Minor vocabulary swaps, publication tag refinements, skills group name adjustments, one additional keyword insertion.
+  - **Tier 3 (< 0.3 pts):** Keyword saturation reduction, minor wording polish, alternative pub selection. The verdict is always "Tier 3 are not worth the edit."
+</Accordion>
+
+<Accordion title="6 — Interview Bridge Points">
+  Five to seven talking points that convert resume claims into interview-ready statements:
+
+  | Resume Topic | Target Domain Equivalent | Opening Line |
+  |-------------|--------------------------|--------------|
+  | Enhanced sampling for folding | Conformation sampling for docking | "The same REMD methodology I used for folding kinetics applies directly to your virtual screening pipeline because..." |
+</Accordion>
+
+<Accordion title="7 — Cover Letter Critique">
+  Six sub-checks across the CL and its relationship to the resume:
+
+  - **6A Anti-Pattern Checklist** — no generic opener, no defensive framing, no credential dump, credentials woven into body
+  - **6B Tailoring Signal Checklist** — names specific PI/group/product, uses 3+ supplementary JD terms, references institution's mission
+  - **6C Context-Specific Checks** — Industry: business value translation. National Lab: mission alignment, lab vocabulary. Academic: PI named, future research direction.
+  - **6D CL ATS Keyword Check** — target 5–8 JD keywords in the CL that supplement (not duplicate) resume keywords
+  - **6E Structural Checks** — word count, tone match, quantification count, domain pivot framing
+  - **6F Package Cohesion** — resume stands alone, every CL claim traceable to a bullet, no contradictions, CL adds context not new achievements
+</Accordion>
+
+<Accordion title="8 — Post-Generation Verification">
+  Mechanical pass/fail checklist — any failure is automatically promoted to a Tier 1 fix:
+
+  **Mechanical:** Char count violations · orphan check · page fill · bullet sequencing
+
+  **Content:** ATS keyword match rate ≥ 70% · provenance flags correct · no inflated verb claims · publication entries match `pub_metadata.md` · CL claims traceable to bullets
+
+  **Structural:** Institution name spelling · complete `.tex` preamble · date format consistency · email matches `config.md` · page count after compile
+
+  **AI Fingerprint Scan:** Em-dash count (flag if > 2) · bullet endings scanned for `-ing` analysis phrases · Tier 1 banned words scan (delve, tapestry, multifaceted, pivotal, leverage, etc.) · CL opener check · sentence length uniformity
+</Accordion>
+
+## Scoring Dimensions
+
+| # | Dimension | Weight | What's Assessed |
+|---|-----------|--------|-----------------|
+| 1 | ATS Keyword Match | 15% | JD keyword coverage rate, verbatim vs semantic, missing high-value terms |
+| 2 | Summary | 10% | Bridge sentence quality, target-domain language, prestige signals |
+| 3 | Skills Section | 10% | Group names as domain signal, content relevance, bold accuracy |
+| 4 | Bullet Quality | 25% | Per-bullet JD alignment, reframing quality, quantification, action verbs |
+| 5 | Publication Selection | 10% | Venue prestige, tag relevance, first-author ratio, domain fit |
+| 6 | Narrative Coherence | 15% | Header-to-footer story, domain thread, first-impression timing |
+| 7 | Page Fill & Visual | 5% | Budget compliance, orphan check, compile clean |
+| 8 | Credibility Signals | 10% | Venue quality, citation metrics, platform adoption, leadership evidence |
+
+### Score Interpretation
+
+| Score | Meaning |
+|-------|---------|
+| **85+** | At or near ceiling. Submit. |
+| **80–84** | Strong. 1–2 targeted improvements could push to ceiling. |
+| **75–79** | Good foundation, but missing domain reframing or key bullets. |
+| **70–74** | First-draft quality. Needs systematic reframing pass. |
+| **< 70** | Fundamental issues — wrong role type, missing sections, or accuracy problems. |
+
+## Output Files
+
+`/critique` saves the full report to `output/<FolderName>/critique_<name>.md` and updates the session file with:
+- `Critique Summary` — score, top findings, Tier 1 fix list
+- `Status: Critique: CURRENT`
+- Updated memory pointer in `CLAUDE.md` Active Sessions
+
+When you approve the results, the skill runs a final file verification to confirm all expected package files exist in `output/<FolderName>/`, then renames the final PDFs for submission using your name from `config.md`.
+
+<Tip>
+`/critique` is designed to run in a dedicated fresh session — it deliberately has no memory of what `/make-resume` or `/make-cl` decided. That separation is what makes the critique valuable: fresh eyes catch what the generation session normalized.
+</Tip>

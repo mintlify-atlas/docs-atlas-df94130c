@@ -1,0 +1,82 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Claude Resume Kit",
+  "projectDescription": "A Claude Code-powered toolkit that extracts your research papers once into a structured knowledge base, then generates tailored LaTeX resumes, CVs, and cover letters for any job description — with anti-fabrication controls, multi-perspective critique, and AI fingerprint avoidance.",
+  "theme": "luma",
+  "primaryColor": "#d57253",
+  "lightColor": "#734c3e",
+  "darkColor": "#34342c",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "prerequisites"
+            ]
+          },
+          {
+            "group": "Setup",
+            "pages": [
+              "setup/configure",
+              "setup/extract-papers",
+              "setup/build-knowledge-base"
+            ]
+          },
+          {
+            "group": "Generating Documents",
+            "pages": [
+              "generating/make-resume",
+              "generating/make-cover-letter",
+              "generating/critique",
+              "generating/edit-resume"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/knowledge-base",
+              "concepts/session-files",
+              "concepts/anti-fabrication",
+              "concepts/ai-fingerprint-avoidance"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/configuration",
+              "reference/latex-templates",
+              "reference/critique-framework",
+              "reference/faq"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "One-time paper extraction with structured Q&A to build a verified knowledge base",
+    "Role-type bundles that reframe achievements for different audiences (academic, industry R&D, national lab)",
+    "Anti-fabrication controls: provenance flags, verb discipline, and corrections log prevent overclaiming",
+    "AI fingerprint avoidance: banned-word lists, structural anti-patterns, and a 12-item post-generation scan",
+    "Multi-perspective critique: five reader personas and eight scoring dimensions",
+    "Character-precise LaTeX output compiled locally — no data leaves your machine",
+    "Three-session workflow (make-resume → make-cl → critique) for fresh-context quality",
+    "Session files as persistent state — recoverable across interruptions"
+  ],
+  "publicApiSurface": [
+    "/setup-extract <paper-path>",
+    "/setup-build-kb",
+    "/make-resume <jd-path>",
+    "/make-cl [session-file-path]",
+    "/critique [session-file-path]",
+    "/edit-resume <tex-path> [critique-path]",
+    "config.md — personal info, provenance flags, role types, document preferences",
+    "resume_builder/templates/ — LaTeX .cls and .tex templates",
+    "resume_builder/helpers/char_count.py — character counting utility"
+  ]
+}

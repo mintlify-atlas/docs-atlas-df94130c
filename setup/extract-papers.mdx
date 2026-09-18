@@ -1,0 +1,186 @@
+---
+title: 'Extract your research papers into the knowledge base'
+sidebarTitle: 'Extract Papers'
+description: 'Run /setup-extract on each paper for structured Q&A about your contributions, then produce a verified extraction file in knowledge_base/extractions/.'
+---
+
+`/setup-extract` is the first real step in building your knowledge base. You point it at a paper, and it reads the full text, asks you structured questions about your specific contributions, collaboration scope, and publication status, then writes a verified extraction file. That file becomes the permanent, citable source for every bullet, skill claim, and cover letter hook Claude will ever generate from that paper. Run it once per paper — you never re-read the paper yourself during generation.
+
+## Command syntax
+
+Single paper:
+
+```
+/setup-extract knowledge_base/papers/my_paper.pdf
+```
+
+Batch mode — multiple paths separated by spaces:
+
+```
+/setup-extract knowledge_base/papers/paper1.pdf knowledge_base/papers/paper2.pdf
+```
+
+In batch mode, Claude collects the clarifying questions for all papers together before writing any extraction files, then produces a combined inventory update at the end with a single stop.
+
+<Tip>
+Prefer `.tex` source files over compiled PDFs when you have both. The `.tex` source often contains more detail — full method descriptions, supplementary equations, and author contribution statements — than what appears in the compiled PDF.
+</Tip>
+
+---
+
+## The five phases
+
+<Steps>
+
+### Startup
+
+Before reading any paper, Claude loads three files:
+
+1. **`CLAUDE.md`** — checks the KB Corrections Log for known factual errors to avoid re-introducing
+2. **`config.md`** — loads your Personal Info (to identify your author position) and Provenance Flags (to cross-check publication status)
+3. **`knowledge_base/extractions/_INVENTORY.md`** — checks whether this paper is already extracted
+
+If the paper is already in the inventory, Claude shows you the existing extraction path and asks whether to re-extract (overwrite) or skip. You must respond before it proceeds.
+
+### Read & Understand
+
+Claude reads the paper using the appropriate method: the Read tool for PDFs, direct file read for `.tex` source. If both exist, it prefers `.tex` for content extraction.
+
+**While reading, it collects:**
+
+- Full title, all authors, year, journal/venue, DOI
+- Your position in the author list (first, co-first, second, middle, last, corresponding)
+- Publication status — checked against `config.md` Provenance Flags first, then inferred from the paper itself
+- All computational methods, experimental techniques, software, and frameworks mentioned
+- Quantitative results — speedups, accuracies, efficiencies, improvements over baselines
+- Novelty claims — "first-ever," "new framework," "novel approach"
+- Collaboration indicators — other groups, institutions, shared resources
+- Funding acknowledgments
+
+### Clarify Your Role (Mandatory Stop)
+
+For multi-author work, your specific contribution is rarely obvious from the paper text alone. Claude presents its understanding of the paper and asks up to five questions:
+
+1. What was your specific contribution? (e.g., all computational work, specific analysis, code development)
+2. Did you develop any tools, methods, or code used in this paper?
+3. Were there other groups or institutions involved? What was your group's role?
+4. Any quantitative results you can personally claim? (e.g., "I ran all the simulations")
+5. Is there anything in this paper that should NOT appear on your resume? (e.g., a collaborator's experimental data)
+
+<Warning>
+This is a mandatory stop. Claude will not write the extraction file until you respond with your own text. This is how provenance accuracy is enforced — the extraction reflects what **you** did, not just what the paper claims was done.
+</Warning>
+
+### Write Extraction
+
+Claude creates the extraction file at `knowledge_base/extractions/<AuthorYear_short_descriptor>.md`. The file contains:
+
+- **Metadata** — full author list with your name bolded, year, journal, DOI, your author role, publication status
+- **Methods & Tools** — computational methods, software/frameworks, hardware/HPC, key techniques
+- **Key Results** — numbered list of quantitative results you can personally claim
+- **Novelty Claims** — what's genuinely new, stated precisely to avoid overclaiming
+- **Collaboration & Scope** — other groups involved, what you did alone vs. with others
+- **Provenance Notes** — what's safe to claim, what needs hedging, what to never claim
+- **Resume Bullet Seeds** — 3–5 draft STAR-format bullets using full-ownership verbs for solo work and hedged verbs for shared work
+
+Claude shows you the complete extraction before moving on.
+
+### Update Inventory
+
+Claude reads `knowledge_base/extractions/_INVENTORY.md` and appends a row for the new extraction:
+
+```markdown
+| # | File | Paper Title | Position | Author Role | Status |
+|---|------|-------------|----------|-------------|--------|
+| 1 | Chen2024_enzyme_stability.md | ML-Guided Enzyme Stability Screening | Postdoc — Lakewood University | first author | published |
+```
+
+After presenting the inventory update, Claude stops again and waits for your confirmation or next instruction.
+
+</Steps>
+
+---
+
+## Extraction file naming
+
+Files follow the convention `<FirstAuthorLastName><Year><2-3_word_descriptor>.md`:
+
+| Example | What it means |
+|---|---|
+| `Chen2024_enzyme_stability.md` | Jordan Chen, 2024 paper, enzyme stability topic |
+| `Smith2024_protein_stability.md` | First author is Smith, 2024, protein stability |
+| `Rivera2023_binding_affinity.md` | First author is Rivera, 2023, binding affinity topic |
+
+<Note>
+If you are first author, use your own last name. Normalize everything to lowercase with underscores — no spaces, no capitalization in the descriptor portion.
+</Note>
+
+---
+
+## What the extraction file looks like
+
+Here is the structure Claude writes, with the actual format from the skill:
+
+```markdown
+# [Full Paper Title]
+
+## Metadata
+- **Authors:** [author list — your name in bold]
+- **Year:** [year]
+- **Journal:** [journal/venue or "unpublished"/"internal"/"under review at X"]
+- **DOI:** [DOI or "N/A"]
+- **User's role:** [first author / co-first / contributing / corresponding]
+- **Status:** [published | under review | draft | internal]
+
+## Methods & Tools
+- **Computational methods:** [e.g., MD, ML, FEA — specific methods and force fields]
+- **Software/frameworks:** [e.g., GROMACS, PyTorch, custom code]
+- **Hardware/HPC:** [clusters, GPU resources if mentioned]
+- **Key techniques:** [methodological details that map to resume skills]
+
+## Key Results
+1. [Result with numbers — e.g., "Achieved 5,000x speedup over brute-force screening"]
+2. [Result — e.g., "Screened 8,500 variants, identified 7 top candidates"]
+
+## Novelty Claims
+- [e.g., "First application of framework X to system Y"]
+
+## Collaboration & Scope
+- **Other groups:** [institutions, PIs involved]
+- **User's specific contribution:** [from Phase 3 clarification]
+- **Shared vs. sole work:** [what you did alone vs. with others]
+
+## Provenance Notes
+- **Publication status:** [matches config.md if listed there]
+- **Safe to claim:** [what you can put on a resume without hedging]
+- **Needs hedging:** [claims requiring "contributed to" framing]
+- **Do NOT claim:** [collaborators' results, overclaiming risks]
+
+## Resume Bullet Seeds
+1. [Action verb] + [what was done] + [quantitative result/impact]
+2. [Action verb] + [method/tool developed] + [what it enabled]
+3. [Action verb] + [scope — e.g., "across N systems"] + [outcome]
+```
+
+---
+
+## The inventory table
+
+`knowledge_base/extractions/_INVENTORY.md` tracks every extraction in a single table that all skills reference at startup. The columns are:
+
+```markdown
+| # | File | Paper Title | Position | Author Role | Status |
+|---|------|-------------|----------|-------------|--------|
+```
+
+You can also edit this file manually — for example, to reorder entries or flag one as needing re-extraction.
+
+---
+
+## What to extract
+
+<Note>
+Extract all papers where you're first author or co-first author, plus any contributing-author papers where you built something significant (a tool, a pipeline, a dataset) that you can personally claim. Quality matters more than quantity — 5 well-extracted papers with precise contribution notes beat 20 shallow extractions.
+</Note>
+
+After extracting all your papers, run `/setup-build-kb` to synthesize the extractions into experience files, bundles, and support files. See [Build Knowledge Base](/setup/build-knowledge-base) for the next step.

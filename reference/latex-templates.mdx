@@ -1,0 +1,198 @@
+---
+title: "LaTeX templates, classes, and character budgets"
+sidebarTitle: "LaTeX Templates"
+description: "Reference for the .cls classes, .tex templates, character-count budgets, and bold width penalties Claude enforces during resume and CV generation."
+---
+
+Claude Resume Kit uses custom LaTeX `.cls` classes and `.tex` templates. Claude generates `.tex` output you compile with `pdflatex` — no LaTeX knowledge is required to use the kit. The templates define visual style, section order, and the character-count budgets Claude enforces during generation. Every generated bullet is measured against these budgets before being written; bullets that overflow their target are rewritten on the spot.
+
+## Template Files
+
+| File | Purpose |
+|------|---------|
+| `resume_builder/templates/resume.cls` | 2-page resume document class |
+| `resume_builder/templates/cv.cls` | Multi-page CV document class |
+| `resume_builder/templates/resume_template.tex` | Resume structural template with FIXED and GENERATE markers |
+| `resume_builder/templates/cv_template.tex` | CV structural template with FIXED and GENERATE markers |
+| `resume_builder/templates/coverletter_template.tex` | Cover letter template |
+| `resume_builder/templates/GS.png` | Google Scholar icon (replace with your own) |
+| `resume_builder/templates/orcid.png` | ORCID icon (replace with your own) |
+
+---
+
+## Template Setup (One-Time)
+
+Before running your first skill, fill in the FIXED sections in the `.tex` templates. Markers in the template files show exactly what to supply:
+
+- `[CONFIG: ...]` — a value you fill in once from `config.md` (name, email, links)
+- `[FIXED: ...]` — content you write once and Claude never touches again (education, publications, awards)
+- `[GENERATE: ...]` — sections Claude writes fresh for each JD (summary, skills, experience bullets)
+
+FIXED sections include: Education, Publications (CV), Honors & Awards, the header block, and any other section you list in `config.md` under **FIXED Sections**.
+
+<Note>
+Once you fill in the FIXED sections, Claude will copy them verbatim into every generated document. Never delete or move `[GENERATE: ...]` markers — those are where Claude writes the tailored content.
+</Note>
+
+---
+
+## Character Count Budgets
+
+Every bullet in every generated document must fit within a precise character budget determined by document type and target line count. These limits exist because LaTeX uses proportional fonts — a bullet at the absolute hard maximum will overflow if it contains wide characters (`m`, `w`, `W`, capitals, or em-dashes).
+
+**Always aim for the middle of the target range, not the hard maximum.**
+
+### Resume (10pt, textwidth = 7.5in)
+
+| Variant | Lines | Target Range | HARD MAX | Orphan Threshold | Word Target |
+|---------|-------|-------------|----------|------------------|-------------|
+| Resume-1L | 1 | 105–111 chars | 117 | — | ~13 words |
+| Resume-2L | 2 | 189–205 chars | 218 | ≥ 78 chars | ~23–25 words |
+
+### CV (11pt, textwidth = 7.5in)
+
+| Variant | Lines | Target Range | HARD MAX | Orphan Threshold | Word Target |
+|---------|-------|-------------|----------|------------------|-------------|
+| CV-1L | 1 | 88–93 chars | 101 | — | — |
+| CV-2L | 2 | 168–182 chars | 190 | ≥ 65 chars | ~21–22 words |
+| CV-3L | 3 | 250–268 chars | 280 | ≥ 65 chars | ~31–32 words |
+
+### Orphan Rule
+
+For any multi-line bullet, the last rendered line must fill at least 70% of the line width. If it does not, Claude rewrites to either fill the last line or shorten the bullet by one line.
+
+- **Resume 2L:** last line ≥ 78 chars
+- **CV 2L:** last line ≥ 65 chars
+- **CV 3L:** last line ≥ 65 chars
+
+A bullet with a short orphan line looks like a layout error and signals that the writer did not proofread the compiled PDF.
+
+---
+
+## Bold Width Penalty
+
+Bold characters render approximately 1.5× wider than regular text at both font sizes. When a bullet contains bold tool names or keywords, the effective safe character limit per line decreases. Claude applies this formula before accepting any bullet:
+
+**Resume (10pt):**
+```
+Effective limit = 119 - (0.5 × bold_char_count)
+```
+
+**CV (11pt):**
+```
+Effective limit = 91 - (0.25 × bold_char_count)
+```
+
+**Examples — Resume (10pt):**
+
+| Bold chars in bullet | Effective limit/line | Safe target range |
+|---------------------|---------------------|-------------------|
+| 0 bold chars | 119 | 105–111 |
+| ~10–25 bold chars (2–4 tool names) | 107–112 | 105–111 |
+| ~28+ bold chars (5+ tool names) | ~105 | 99–105 |
+
+**Examples — CV (11pt):**
+
+| Bold chars in bullet | Effective limit/line | Safe target range |
+|---------------------|---------------------|-------------------|
+| 0 bold chars | 91 | 88–93 |
+| ~10–18 bold chars (2–3 tool names) | 85–88 | 83–88 |
+| ~28+ bold chars (5+ tool names) | 83–85 | 80–85 |
+
+---
+
+## `char_count.py` — The Authoritative Counter
+
+The `resume_builder/helpers/char_count.py` utility strips LaTeX markup and counts the rendered characters Claude would see on the compiled page. Claude runs this after every section during generation — it is the authoritative count, never mental math.
+
+### Usage
+
+```bash
+# Count a single bullet string
+python3 resume_builder/helpers/char_count.py "\textbf{DFT} analysis of \ce{TiO2} surfaces"
+
+# Pipe from stdin
+echo "bullet text" | python3 resume_builder/helpers/char_count.py
+
+# Analyze a full .tex file (resume format)
+python3 resume_builder/helpers/char_count.py -f resume output/Acme/e2e_acme_engineer_resume.tex
+
+# Analyze a full .tex file (CV format)
+python3 resume_builder/helpers/char_count.py -f cv output/Acme/e2e_acme_engineer_cv.tex
+
+# Raw count only (for scripting)
+python3 resume_builder/helpers/char_count.py --raw "bullet text"
+```
+
+### Sample Output
+
+```
+  198 chars | 2L RESUME | OK (target 189-205, max 218)
+  Bold: 12 chars -> effective limit/line: 113
+  Em-dashes: 0 (each ~2x wide, budget +0 extra)
+  Rendered: Developed ESM-2 stability predictor achieving 0.82 Spearman across 847 variants; deployed as shared lab infrastructure used by 3 research groups
+```
+
+**Status codes:**
+
+| Code | Meaning |
+|------|---------|
+| `OK` | Within target range — submit |
+| `SHORT` | Below target — bullet is too short, add content |
+| `NEAR MAX` | Between target and hard max — review for wide characters |
+| `OVER LIMIT` | Exceeds hard max — rewrite required before proceeding |
+
+When `char_count.py` is unavailable, Claude falls back to manual counting and adds a comment in the `.tex` file: `% char_count.py unavailable — manual count, verify after compile`.
+
+---
+
+## LaTeX Scientific Notation
+
+All templates load the `mhchem` package (`\usepackage[version=4]{mhchem}`). Use the following mandatory conventions for all scientific notation in generated output.
+
+<Warning>
+`~` in LaTeX is a non-breaking space, **not** a tilde. Using `~64` instead of `$\sim$64` will produce a non-breaking space before `64` in your compiled PDF — a silent rendering bug that is easy to miss.
+</Warning>
+
+| Item | Correct LaTeX | Wrong | Rendered |
+|------|--------------|-------|----------|
+| Chemical formulas | `\ce{H2O}`, `\ce{TiO2}` | `H2O`, `H$_2$O` | H₂O |
+| Superscripts | `$^2$`, `$^\circ$C` | `^2`, `°C` | ², °C |
+| R² values | `R$^2$=0.99` | `R^2`, `R2` | R²=0.99 |
+| Greek letters | `$\beta$`, `$\alpha$` | `beta`, `alpha` | β, α |
+| Approximately | `$\sim$64` | `~64` | ~64 |
+| Superscript labels | `X$^2$Y` | `X2Y` | X²Y |
+| Alpha phase | `$\alpha$-phase` | `alpha-phase` | α-phase |
+
+**Character counting with LaTeX markup:** When counting rendered characters, strip all LaTeX commands first:
+- `\textbf{X}` → `X`
+- `\ce{TiO2}` → `TiO2` (4 rendered chars)
+- `$\beta$` → 1 rendered char
+- `$\sim$` → 1 rendered char (`~`)
+- `--` → 1 rendered char (en-dash)
+- `---` → 1 rendered char (em-dash), but renders ~2× wide — budget 2 extra chars per em-dash
+
+---
+
+## Customization
+
+You can modify the visual style, section order, and icons without changing the generation rules.
+
+<CardGroup cols={2}>
+  <Card title="Fonts, Colors & Spacing" icon="palette">
+    Edit the `.cls` files in `resume_builder/templates/`. Font families, heading colors, item separators, and vertical spacing are all defined there. Do not add inline LaTeX overrides to generated `.tex` files — they will be overwritten on the next generation.
+  </Card>
+  <Card title="Section Order" icon="list-ol">
+    Reorder sections in `resume_template.tex` or `cv_template.tex`. Keep all `[GENERATE: ...]` markers in place. The skills write content into those markers regardless of where they appear in the file.
+  </Card>
+  <Card title="Icons" icon="image">
+    Replace `GS.png` and `orcid.png` with your own images at the same filenames. The `.cls` files reference these by filename — no code change required.
+  </Card>
+  <Card title="Page Geometry" icon="ruler">
+    Adjust margins in the `.cls` files if needed. Change the `\geometry{...}` block. After any geometry change, re-validate all character budgets by recompiling and running `char_count.py` on the output — the textwidth assumptions may have shifted.
+  </Card>
+</CardGroup>
+
+<Warning>
+Never modify `\vspace` values, `\geometry` settings, or `.cls` formatting in generated `.tex` output files. These are calibrated per template. If a critique flags a spacing issue in a FIXED section, note it for the next full regeneration — do not patch it inline.
+</Warning>

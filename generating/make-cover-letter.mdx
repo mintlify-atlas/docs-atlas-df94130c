@@ -1,0 +1,119 @@
+---
+title: "Generate a matching cover letter with /make-cl"
+sidebarTitle: "/make-cl"
+description: "Reads your session file and finished resume to write a verified, institution-aware cover letter — every hook web-searched before you see the draft."
+---
+
+`/make-cl` picks up where `/make-resume` left off. It reads the session file and the finished `.tex` from your last generation run, then produces a cover letter that deepens what the resume presents — never introducing claims that aren't traceable to a resume bullet. Every named hook (PI, program, product, company news) is web-searched and verified before the draft is shown to you.
+
+## Command Syntax
+
+Pass the session file path directly:
+
+```bash
+/make-cl output/Whitfield_ProteinEng/session_whitfield_proteineng.md
+```
+
+Or pass just the session name — the skill derives the file path automatically:
+
+```bash
+/make-cl whitfield_proteineng
+```
+
+If `$ARGUMENTS` is empty, the skill checks `CLAUDE.md` Active Sessions for the most recent session.
+
+## Recovery Logic
+
+Before generating anything, `/make-cl` checks the session file status and routes accordingly:
+
+| Session Status | Action |
+|---------------|--------|
+| Resume: not DONE | "Resume not yet generated. Run `/make-resume` first." — stops. |
+| Cover Letter: IN_PROGRESS | Checks if `.tex` exists, offers to resume or regenerate. |
+| Cover Letter: DONE | "CL already generated. Run `/critique` next." — stops. |
+| Cover Letter: PENDING | Proceeds to Phase 1. |
+
+## The Three Phases
+
+<Steps>
+  <Step title="Phase 1: Load Context">
+    The skill reads context in a defined order to reconstruct full application state:
+
+    1. **Session file** — Company Context, Cover Letter Plan, Framing Strategy, ATS Keywords
+    2. **Finished resume/CV `.tex`** — the document the CL must complement, not duplicate
+    3. `resume_builder/reference/cl_reference.md` — format rules, paragraph templates, anti-patterns
+    4. `resume_builder/support/ai_fingerprint_rules.md` — CLs are the most vulnerable document type
+    5. **Bundle Section 5** — the Cover Letter Guide for the matched role type
+    6. All `resume_builder/support/significance_*.md` files — field context for depth
+
+    Session file status is updated to `Cover Letter: IN_PROGRESS`.
+  </Step>
+
+  <Step title="Phase 2: Generate">
+    Institution type is detected from the session file Cover Letter Plan. Format and target word count are determined by type:
+
+    | Institution Type | Paragraphs | Word Count |
+    |-----------------|-----------|------------|
+    | Industry | 3 | 250–300 words |
+    | National Lab | 4 | 350–450 words |
+    | Academic (postdoc) | 4 | 350–450 words |
+    | Academic (faculty) | 4 | 450–650 words |
+
+    The CL opens with a specific reference to the institution's work — a named PI and paper, a specific program thrust, or a named product or technology news item. No generic openers. Credentials are woven into body paragraphs, not dumped in the closing. Significance files provide field-context depth that resume bullets alone cannot deliver.
+
+    The draft is saved to `output/<FolderName>/e2e_<name>_cover_letter.tex`.
+  </Step>
+
+  <Step title="CL Hook Verification Gate (Mandatory)">
+    Before the draft is shown to you, every hook used in the letter is web-searched:
+
+    - **Academic:** PI name + cited paper or research area
+    - **National Lab:** named program, thrust area, or group publication
+    - **Industry:** product, technology, or company news referenced in the opening
+
+    Evidence is presented as:
+
+    ```
+    Claim: "Professor Chen's 2024 work on enzyme-substrate tunneling..."
+    Evidence: Paper found — "Tunnel vision in enzyme catalysis" (JACS, 2024, Chen et al.)
+    Source: https://pubs.acs.org/doi/...
+    ```
+
+    Any item that cannot be verified is flagged `UNVERIFIED — please confirm`. The CL draft is not presented until all hooks are verified or flagged. This gate cannot be skipped.
+
+    **MANDATORY STOP:** Presents CL summary (word count, page count, key hooks used). You must confirm or request changes before status updates.
+  </Step>
+</Steps>
+
+## Compile Verification Gates
+
+After generation, the skill compiles the `.tex` and checks all gates before presenting results:
+
+| Gate | Requirement | Action if FAIL |
+|------|-------------|----------------|
+| Word count | Industry 250–300 · Lab/Academic 350–450 | Trim or expand |
+| Page count | Resume package: 1 page · CV package: 1–2 pages | Adjust content |
+| Page fill | 1 pg: well-filled · 2 pg: page 2 ≥ half filled before signature | Adjust |
+| Anti-patterns | No generic opener · no defensive framing · no credential dump | Rewrite |
+| Package cohesion | Every CL claim traceable to a resume bullet · no contradictions | Fix |
+| Compile | Clean `pdflatex` | Fix LaTeX errors |
+
+## What the Session File Provides
+
+`/make-cl` relies heavily on context built by `/make-resume`. The richer that context, the stronger the letter.
+
+<Accordion title="Session file fields used by /make-cl">
+  - **Company Context** — mission, R&D culture, "why them" angle, recent news from Phase 0 web research
+  - **Cover Letter Plan** — institution type, paragraph structure outline, specific hooks to use, jargon calibration
+  - **Framing Strategy** — lead narrative and emphasize/downplay decisions to maintain package consistency
+  - **ATS Keywords** — supplementary keywords to weave into the CL body (target: 5–8 that don't merely duplicate resume)
+  - **Output Files** — path to the finished `.tex` the CL must complement
+</Accordion>
+
+<Tip>
+`/make-cl` uses `resume_builder/support/significance_*.md` files to give bullets field-context depth — the "why this matters" layer that a resume bullet can't carry. These files are built by `/setup-build-kb`. Richer significance files produce richer, more credible cover letters.
+</Tip>
+
+<Note>
+After `/make-cl` completes, run `/clear` before starting `/critique`. Fresh context means the critique reads your package the way a real reviewer would — without the generation session's priors. The exact next command is printed at the STOP.
+</Note>

@@ -1,0 +1,176 @@
+---
+title: "Refine your documents with /edit-resume"
+sidebarTitle: "/edit-resume"
+description: "Applies critique feedback and inline instructions to existing .tex files, running char count and compile gates after each section to preserve page budget."
+---
+
+`/edit-resume` applies critique feedback and user instructions to existing `.tex` files — resume, CV, or cover letter. It classifies every requested change, presents a numbered edit plan for your approval, then executes edits section by section while running all quality gates after each one. The session file's Edit History grows with each run, and the critique is automatically marked STALE when edits are applied.
+
+## Command Syntax
+
+Apply edits from a critique file:
+
+```bash
+/edit-resume output/Acme/e2e_acme_resume.tex output/Acme/critique_acme.md
+```
+
+Apply inline instructions:
+
+```bash
+/edit-resume output/Acme/e2e_acme_resume.tex "shorten Position 1 header, fill last page"
+```
+
+Combine both — inline instructions take highest priority:
+
+```bash
+/edit-resume output/Acme/e2e_acme_resume.tex output/Acme/critique_acme.md "also swap P2-3 to a 2L"
+```
+
+Pass just the `.tex` path when unsure what to fix:
+
+```bash
+/edit-resume output/Acme/e2e_acme_resume.tex
+```
+
+If no instructions are given, the skill asks what you'd like to change before proceeding.
+
+## The Four Phases
+
+<Steps>
+  <Step title="Phase 1: Load Context">
+    The skill reads all relevant context before touching a single line of the `.tex`:
+
+    1. **Session file** — Framing Strategy, Company Context, Bullet Plan, Edit History
+    2. `resume_builder/reference/resume_reference.md` — char limits, budgets, fixed sections
+    3. The `.tex` file being edited
+    4. The critique file (if provided)
+    5. The JD file (path from session file's JD Info section)
+
+    It then compiles the current `.tex` to establish a baseline page count and runs `char_count.py` to record baseline violations:
+
+    ```bash
+    python3 resume_builder/helpers/char_count.py -f [resume|cv] output/<FolderName>/[file].tex
+    ```
+
+    The baseline is appended to the session file under `## Edit [N] Baseline`:
+
+    ```
+    ## Edit 1 Baseline
+    - Pages: 2
+    - Char violations: none
+    - Orphan violations: 1 (P2 bullet 3)
+    - White space last page: 4 lines
+    - Variable bullets: 11
+    - Rendered lines: 24
+    ```
+  </Step>
+
+  <Step title="Phase 2: Diagnose & Plan Edits">
+    Change requests are gathered from three sources in priority order:
+
+    1. **User instructions from `$ARGUMENTS`** (highest priority)
+    2. **Critique file** — Tier 1 fixes first, then Tier 2
+    3. **Auto-detected issues** from Phase 1 baseline (char violations, orphans, page fill)
+
+    Every change is cross-checked against the session file's Framing Strategy — edits must stay consistent with decisions made during `/make-resume`.
+
+    Each planned change is classified:
+
+    | Class | Meaning |
+    |-------|---------|
+    | MODIFY | Change text of existing bullet, summary, or skills — budget unchanged |
+    | SWAP | Replace one bullet with another — budget unchanged if same variant |
+    | ADD | Insert new bullet — budget increases by rendered lines |
+    | REMOVE | Drop a bullet — budget decreases |
+    | VARIANT CHANGE | e.g., 2L → 3L — budget changes by rendered line delta |
+    | FIXED | Blocked — template-locked section, shown as `[FIXED — cannot edit]` with explanation |
+
+    If any change is ADD, REMOVE, SWAP-with-different-variant, or VARIANT CHANGE, total bullets and rendered lines are recalculated. If the result exceeds budget, the overflow is presented and you are asked which bullet to drop or shorten.
+
+    **MANDATORY STOP:** The numbered edit plan is presented. You must respond explicitly before any edits are applied.
+  </Step>
+
+  <Step title="Phase 3: Execute Edits">
+    Edits are applied one section at a time. After each section, `char_count.py` runs and any OVER violations or orphans are fixed before moving to the next section. Edit N Status in the session file is updated after each individual edit:
+
+    ```
+    - Edit 1 (orphan fix): DONE
+    - Edit 2 (Summary rewrite): IN_PROGRESS
+    ```
+
+    For cover letter edits, CL-specific gates apply: word count, paragraph count, anti-pattern check, and package cohesion are all verified after each change.
+
+    After all edits, the full document compiles:
+
+    ```bash
+    pdflatex -interaction=nonstopmode -output-directory=output/<FolderName> output/<FolderName>/[file].tex
+    ```
+
+    The compiled PDF is visually inspected for page count, white space, orphans, and header wrapping.
+  </Step>
+
+  <Step title="Phase 4: Update & Present">
+    The session file is updated with a full Edit History entry:
+
+    ```
+    ### Edit 1 (2026-03-15): orphan fix + last-page fill
+    - Changes: P2 bullet 3 padded (187 → 194 chars); P3 bullet 2 swapped to 3L
+    - Source: auto-detected orphan + user request ("fill last page")
+    - Verification: gates passed
+    ```
+
+    A before/after delta table is presented:
+
+    | Metric | Before | After | Delta |
+    |--------|--------|-------|-------|
+    | Page count | 2 | 2 | — |
+    | Char violations | 0 | 0 | — |
+    | Orphans | 1 | 0 | −1 |
+    | White space | 4 lines | 2 lines | −2 |
+
+    Any metric that worsened is flagged. Critique status is marked STALE if edits were applied after the last critique.
+
+    **MANDATORY STOP:** Results are presented. You confirm or request further edits.
+  </Step>
+</Steps>
+
+## Quality Gates
+
+All gates run after each edited section. No gate can be skipped.
+
+### Resume/CV Gates
+
+| Gate | Requirement | Action if FAIL |
+|------|-------------|----------------|
+| Char count | No OVER violations | Fix bullet before proceeding to next section |
+| Page fill | Resume: ≤ 3 lines white space · CV: check rendered line target | Expand/trim variable bullets |
+| Page count | Matches `config.md` Document Preferences | Trim or expand variable content |
+| Orphan | 2L bullet last line ≥ 70% fill | Pad or trim |
+| Title width | Position title + date fits 1 line | Shorten title |
+| Compile | Clean `pdflatex` | Fix LaTeX errors |
+
+### Cover Letter Gates
+
+| Gate | Requirement | Action if FAIL |
+|------|-------------|----------------|
+| Word count | Industry 250–300 · Lab/Academic 350–450 | Trim or expand |
+| Page fill | 1 pg: well-filled · 2 pg: page 2 ≥ half filled before signature | Adjust |
+| Paragraph count | Industry 3 · Lab/Academic 4 | Restructure |
+| Anti-patterns | No generic opener · no defensive framing · no credential dump | Rewrite |
+| Package cohesion | CL claims traceable to resume bullets · no contradictions | Fix |
+
+## FIXED Sections
+
+FIXED sections are template-locked across all outputs. The skill will explain the restriction if you request an edit to one of these sections.
+
+<Note>
+FIXED sections (Education, Publications, Awards, Header) are defined in `config.md` and are never modified by `/edit-resume`. Only VARIABLE sections — Summary, Technical Skills, and Research Experience bullets and headers — can be changed. This prevents accidental drift in the document's structural anchor points.
+</Note>
+
+## Edit Recovery
+
+If a session is interrupted mid-edit, `/edit-resume` detects the IN_PROGRESS status on startup, reads the current `.tex` to see which edits are already applied, and resumes from the next pending item in the plan.
+
+<Tip>
+After `/edit-resume`, run `/critique` again in a fresh session — the session file marks critique as STALE whenever edits are applied, so the score from the previous critique is no longer valid. The updated critique will show whether your changes moved the score and whether any new issues were introduced.
+</Tip>

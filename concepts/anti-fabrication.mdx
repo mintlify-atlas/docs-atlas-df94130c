@@ -1,0 +1,165 @@
+---
+title: "Anti-fabrication controls in Claude Resume Kit"
+sidebarTitle: "Anti-Fabrication"
+description: "Provenance flags, verb discipline, and the accuracy priority hierarchy enforce verified claims across every generated resume, CV, and cover letter."
+---
+
+Claude Resume Kit is built around a fundamental design principle: `Accuracy > Relevance > Impact > ATS > Brevity`. Every skill enforces this hierarchy. When there is a conflict between a more impressive claim and an accurate one, accuracy wins — always. This is not a style preference; it is a hard constraint that is architecturally enforced through provenance flags, verb discipline, and a corrections log.
+
+## The Priority Hierarchy
+
+The five-level hierarchy governs every generation decision, from bullet selection to word choice.
+
+<CardGroup cols={2}>
+  <Card title="Accuracy" icon="shield-check">
+    Never make a claim that isn't traceable to source material in the knowledge base. This level is non-negotiable — it overrides all others.
+  </Card>
+  <Card title="Relevance" icon="bullseye">
+    Among accurate achievements, pick the most JD-relevant ones. Bundle Priority Matrices encode this per audience.
+  </Card>
+  <Card title="Impact" icon="chart-line">
+    Quantify and frame achievements powerfully. STAR structure, concrete metrics, active verbs. But only after Accuracy and Relevance are satisfied.
+  </Card>
+  <Card title="ATS" icon="magnifying-glass">
+    Include JD keywords where they fit naturally. Never force keywords in a way that misrepresents the work.
+  </Card>
+</CardGroup>
+
+<Card title="Brevity — satisfied last" icon="scissors">
+  Cut only after all higher priorities are satisfied. Character limits matter, but they are the last constraint to apply, not the first.
+</Card>
+
+## Provenance Flags
+
+Every item in your knowledge base has a publication status defined in `config.md`. Skills read this table before every generation run. There are no exceptions.
+
+The provenance table from the example configuration (`example_config.md`) shows what correct tracking looks like:
+
+```markdown
+## Provenance Flags
+
+| Item | Status | Correct Framing |
+|------|--------|-----------------|
+| Enzyme solvent tolerance paper (Chen, Yamamoto, Holmberg) | under review at Proteins | "under review" — never say "published" |
+| Screening pipeline tool | unpublished internal tool | "computational infrastructure I developed" — never imply peer-reviewed |
+| Stability database preprint | preprint on bioRxiv, not yet submitted | "preprint" — do not say "published" or "under review" |
+```
+
+The blank template in `config.md` provides the same structure for you to fill in:
+
+```markdown
+## Provenance Flags
+
+| Item | Status | Correct Framing |
+|------|--------|-----------------|
+| Example: My Nature paper | under review | "under review at Nature" — never say "published in Nature" |
+| Example: Internal tool | unpublished | "infrastructure I developed" — never imply peer-reviewed |
+```
+
+Skills apply these rules in two places: once at bullet generation time (to control what claims appear in `.tex` output), and again during `/critique`'s Technical Reviewer pass (to audit every quantitative claim and verify provenance flags are respected).
+
+**What provenance flags prevent:**
+
+- Claiming a preprint is a peer-reviewed publication
+- Naming a journal a paper is "published in" when it is under review
+- Describing an internal tool as if it were open-source or community-validated
+- Implying a result is your own when it came from a collaborator's experiment
+
+## Verb Discipline
+
+The most common anti-fabrication failure in AI-generated resumes is overstating authorship. Claude Resume Kit enforces a two-category verb rule.
+
+<Tabs>
+  <Tab title="Full-Ownership Verbs">
+    Use **only** for work performed independently:
+
+    `Developed`, `Built`, `Engineered`, `Designed`, `Created`, `Implemented`, `Wrote`
+
+    These verbs claim sole credit. Only use them when the extraction file confirms the user was the sole contributor to that component.
+
+    **Example:** Jordan Chen designed the ML pipeline and ran all MD simulations independently → `Developed metadynamics-based enhanced sampling protocol for protein folding`
+  </Tab>
+  <Tab title="Hedged Verbs">
+    Use for shared or contributing-author work:
+
+    `Contributed`, `Provided`, `Supported`, `Co-developed`, `Assisted`
+
+    The experience file marks exactly which achievements require hedged verbs based on the collaboration scope recorded in the extraction.
+
+    **Example:** Snakemake workflow was co-developed with M. Rivera → `Co-developed transfer learning framework...` (never `Developed`)
+  </Tab>
+</Tabs>
+
+**Default rule:** When in doubt, hedge. The system defaults to caution, not to the more impressive claim.
+
+## Five Hard Generation Rules
+
+`CLAUDE.md` defines five rules that cannot be overridden by user directives, style preferences, or ATS optimization pressure.
+
+<Steps>
+  <Step title="Rule 1: No code folder names as package names">
+    Never use internal code folder names as if they are software packages. Always describe the tool or method instead.
+
+    **Wrong:** `"Built FEM_project/ solver for..."`
+    **Right:** `"Built custom finite element solver for..."`
+  </Step>
+
+  <Step title="Rule 2: No LOC counts or test counts">
+    Never include lines-of-code counts or test counts in resume, CV, or cover letter output. Focus on what the tool does, its impact, and its adoption.
+
+    **Wrong:** `"Wrote 12,000-line Python codebase with 847 unit tests"`
+    **Right:** `"Built automated screening pipeline adopted by 6 researchers across 3 active projects"`
+  </Step>
+
+  <Step title="Rule 3: Publication status accuracy">
+    Only list papers as "Under Review" if they are actually under review. Check `config.md` Provenance Flags. A preprint is not "under review." An accepted paper is not "under review."
+  </Step>
+
+  <Step title="Rule 4: Publication format — use et al.">
+    Use et al. format for citations. Show authors up to and including the user's position, then "et al." When total authors ≤ 4, show all names.
+
+    **Example:** Chen et al., ACS Catalysis 2025 (not the full author list)
+  </Step>
+
+  <Step title="Rule 5: Funding is not a personal award">
+    Institutional project funding (grants, internal R&D programs) is NOT a personal fellowship or award. Never list funding sources under Fellowships & Honors.
+
+    **Wrong:** `"NIH R01 Grant, $450K, 2024"` listed under Awards
+    **Right:** Funding appears in a context sentence or is omitted; only personal fellowships appear under Honors
+  </Step>
+</Steps>
+
+## KB Corrections Log
+
+Over time, you will catch specific errors — wrong numbers, wrong names, wrong collaborator credits. The `config.md` KB Corrections Log is a table of verified errors that skills must never re-introduce.
+
+From `example_config.md`:
+
+```markdown
+## KB Corrections Log
+
+| Correction | Details |
+|-----------|---------|
+| Transfer learning framework credit | Co-developed with M. Rivera. Always use "Co-developed", never "Developed" alone. |
+| ESM-2 stability prediction accuracy | 0.82 Spearman (not 0.85). Confirmed in published Table 2. |
+```
+
+The blank template prompts you to add your own:
+
+```markdown
+## KB Corrections Log
+
+| Correction | Details |
+|-----------|---------|
+| Example: Tool X name | It's "ToolX-v2" not "ToolX". Always use the correct name. |
+```
+
+Skills read this log at startup on every generation run. If an AI-generated draft ever introduces an error (a wrong metric, a misattributed result), add it here and it will never appear again.
+
+<Warning>
+  The anti-fabrication rules are hard constraints — they override style, relevance, and impact considerations. A bullet that requires violating a provenance flag or verb discipline rule should be rewritten, not submitted. These rules exist because overclaiming is a credibility risk, not just an accuracy problem.
+</Warning>
+
+<Note>
+  The `/critique` skill's Technical Reviewer persona specifically audits every quantitative claim for truthfulness, checks all provenance flags, verifies verb discipline on contributing-author bullets, and confirms that publication entries match the knowledge base. Any failure becomes a Tier 1 fix.
+</Note>

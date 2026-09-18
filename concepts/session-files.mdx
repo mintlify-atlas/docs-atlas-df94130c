@@ -1,0 +1,185 @@
+---
+title: "Session files: persistent state for every application"
+sidebarTitle: "Session Files"
+description: "Every job application gets a session file that all four generation skills read and update — the single source of truth for the full pipeline."
+---
+
+Every job application gets a persistent session file at `output/<FolderName>/session_<name>.md`. It is the single source of truth for that application: all four generation skills (`/make-resume`, `/make-cl`, `/critique`, `/edit-resume`) read and update it at startup. Because the entire pipeline state lives in one file, any session can be interrupted and resumed without losing work — you never need to re-explain what bundle was selected, which achievements were planned, or what critique score the last version received.
+
+## What a Session File Contains
+
+Session files follow a fixed template with sections that accumulate across the three-session workflow. Each section is populated by a different skill.
+
+<Accordion title="JD Info — populated by /make-resume Phase 0">
+  The basic facts about the application. Written immediately when Phase 0 starts.
+
+  ```markdown
+  ## JD Info
+  - **File:** JDs/whitfield_asst_prof_2026.txt
+  - **Role:** Assistant Professor, Department of Biomedical Engineering
+  - **Company:** Whitfield University (R1 research university)
+  - **Bundle:** bundle_academic.md
+  - **Format:** CV (5-page, cv.cls) + 1-2 page cover letter
+  - **Salary/Details:** —
+  ```
+</Accordion>
+
+<Accordion title="JD Analysis — populated by /make-resume Phase 0">
+  The structured output of Phase 0 research. Contains a requirements match table, extracted ATS keywords organized by category, and a gap assessment separating direct matches, bridgeable gaps, and hard gaps.
+
+  ```markdown
+  ## JD Analysis
+  ### Requirements
+  | # | Requirement | Match | Evidence |
+  |---|-------------|-------|----------|
+  | 1 | ML models for protein stability | Direct | ESM-2 fine-tuning, 0.82 Spearman |
+  | 2 | Molecular dynamics (GROMACS) | Direct | GROMACS cited in 4 experience bullets |
+  | 3 | Teaching ability | Bridge | TA experience, 3 lab modules developed |
+
+  ### ATS Keywords
+  - **ML/AI:** machine learning, protein language model, transfer learning
+  - **Domain:** protein engineering, enzyme stability, drug discovery
+  - **Methods:** molecular dynamics, enhanced sampling, free energy perturbation
+  - **Tools:** GROMACS, Python, HPC, SLURM
+  ```
+</Accordion>
+
+<Accordion title="Company Context — populated by /make-resume Phase 0">
+  Mission, role purpose, culture signals, and the "why them" angle. This is researched from the JD and web searches in Phase 0, then reused by `/make-cl` to build the cover letter hook without re-researching.
+</Accordion>
+
+<Accordion title="Framing Strategy — populated by /make-resume Phase 0">
+  The narrative strategy for the full application: lead narrative, vocabulary reframing map, what to emphasize and downplay, CL hooks, and any user directives (e.g., `"Lead with A"`, `"Make B a 2L"`).
+</Accordion>
+
+<Accordion title="Critique Context — populated by /make-resume Phase 0">
+  Built during Phase 0 specifically for later use by `/critique`. Contains the reviewer persona (constructed from the JD's reporting line and company context), the competitive landscape, and the domain vocabulary that separates insider from outsider at this company.
+</Accordion>
+
+<Accordion title="Cover Letter Plan — populated by /make-cl">
+  Institution type, paragraph count, word count target, the specific P1 hook (referencing the PI's lab, a product, or a research area), the methodology bridge sentence if pivoting domains, and jargon level.
+</Accordion>
+
+<Accordion title="Bullet Plan — populated by /make-resume Phase 1">
+  The per-position tables that record exactly which achievement, at which variant, was planned — and why. These tables are presented to the user for confirmation before any `.tex` is written.
+
+  ```markdown
+  ## Bullet Plan
+
+  ### Postdoc — Lakewood University (4 bullets, 8 rendered lines)
+  | # | ID | Achievement | Variant | Lines | Rationale |
+  |---|-----|------------|---------|-------|-----------|
+  | 1 | L1 | Enzyme Stability Screening | 2L | 2 | Direct JD match: ML + protein engineering |
+  | 2 | L4 | Transfer Learning Framework | 2L | 2 | Open-source tool; JD mentions "collaborative" |
+  | 3 | L2 | Enzyme Solvent Tolerance | 2L | 2 | Deepens enzyme engineering; industrial apps |
+  | 4 | L3 | Automated Screening Pipeline | 2L | 2 | JD requires HPC; infrastructure contribution |
+
+  **Budget:** 7 variable bullets, 14 rendered lines vs target 14
+  ```
+</Accordion>
+
+<Accordion title="Output Files — populated by /make-resume Phase 2">
+  Paths to every generated file in the output folder.
+
+  ```markdown
+  ## Output Files
+  - Resume/CV: output/Whitfield_ProteinEng/e2e_whitfield_proteineng_cv.tex
+  - Cover Letter: output/Whitfield_ProteinEng/e2e_whitfield_proteineng_cover_letter.tex
+  - Critique: output/Whitfield_ProteinEng/critique_whitfield_proteineng.md
+  ```
+</Accordion>
+
+<Accordion title="Critique Summary — populated by /critique">
+  Score, key findings, and the Tier 1 fixes from the critique. Written after the critique session, read by `/edit-resume` to apply targeted changes.
+</Accordion>
+
+<Accordion title="Edit History — populated by /edit-resume">
+  A per-edit log recording what changed, the source (critique item number or user request), and which verification gates were checked after the edit.
+</Accordion>
+
+## The Status Section
+
+The Status section is the most important part of the session file for workflow continuity. It shows which phases are complete, which are in progress, and — most importantly — the exact command to paste after `/clear`.
+
+```markdown
+## Status
+- Phase 0: DONE
+- Phase 1: DONE (7 bullets confirmed)
+- Phase 2 Resume:
+  - Summary: DONE
+  - Skills: DONE
+  - Position 1 (4 bullets): DONE
+  - Position 2 (3 bullets): DONE
+  - Position 3 (FIXED, 2 bullets): DONE
+  - Compile: DONE
+- Cover Letter: PENDING
+- Critique: PENDING
+- **Next:** /make-cl output/Whitfield_ProteinEng/session_whitfield_proteineng.md
+- **Next CL:** /make-cl output/Whitfield_ProteinEng/session_whitfield_proteineng.md
+- **Next Critique:** /critique output/Whitfield_ProteinEng/session_whitfield_proteineng.md
+```
+
+At the end of every session, the skill updates Status and writes the next command into the `Next:` field. You `/clear`, copy the command, and continue — no decision-making required.
+
+## File Naming Convention
+
+Session file names are derived from the JD filename using lowercase and underscores. All output files for the same application share the same key.
+
+```
+JDs/JD_Whitfield_ProteinEng.txt
+  └── output/Whitfield_ProteinEng/
+        ├── session_whitfield_proteineng.md       ← session file
+        ├── e2e_whitfield_proteineng_cv.tex        ← generated CV
+        ├── e2e_whitfield_proteineng_cover_letter.tex
+        └── critique_whitfield_proteineng.md
+```
+
+When you pass any of those output file paths to a skill, it derives the session file name automatically by stripping the `e2e_` prefix and the `_cv.tex` / `_resume.tex` / `_cover_letter.tex` suffix.
+
+## The Three-Session Workflow
+
+The session file enables three separate Claude Code sessions for three separate skills — each starting from a clean context. Fresh context produces better quality, especially for critique (you want fresh eyes, not the same context that generated the resume).
+
+```
+Session 1   /make-resume JDs/JD_Whitfield_ProteinEng.txt
+             → Phase 0: research, JD analysis, company context
+             → Phase 1: bullet plan (confirm with user)
+             → Phase 2: generate CV .tex, compile
+             → writes Status.Next = /make-cl ...
+             /clear
+
+Session 2   /make-cl output/Whitfield_ProteinEng/session_whitfield_proteineng.md
+             → loads session file, reads company context + CL hooks
+             → generates cover letter .tex, compiles
+             → writes Status.Next = /critique ...
+             /clear
+
+Session 3   /critique output/Whitfield_ProteinEng/session_whitfield_proteineng.md
+             → loads session file, reads framing strategy + critique context
+             → runs 8-dimension critique, writes critique_*.md
+             → if approved: finalization
+             /clear
+
+If edits needed:
+             /edit-resume output/.../e2e_*_cv.tex output/.../critique_*.md
+             /clear
+             /critique output/.../session_*.md   ← re-critique
+```
+
+## Active Sessions Pointer
+
+`CLAUDE.md` contains an Active Sessions table that skills update at the end of each session:
+
+```markdown
+## Active Sessions
+
+| Session | Status | Next Command |
+|---------|--------|-------------|
+| whitfield_proteineng | Phase 2 complete | /make-cl output/Whitfield_ProteinEng/session_whitfield_proteineng.md |
+```
+
+If you open a new Claude Code session without specifying a session file, any skill that reads `CLAUDE.md` on startup (which all skills do) can find the active session here. This is the recovery path if you forget which command to copy next.
+
+<Tip>
+  The `Status: Next:` field always shows the exact command to copy after `/clear`. You never need to remember what comes next — it's written into the session file at the end of every session before the skill stops.
+</Tip>
